@@ -10,9 +10,9 @@ if nargin<4
 end
 
 %Boolean options for plotting and processing
-derivative=0;
+derivative=1;
 plotty=0;
-plotfft=0;
+plotfft=1;
 saveout=0;
 
 hdr_len=16;
