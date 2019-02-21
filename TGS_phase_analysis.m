@@ -127,8 +127,9 @@ pos(:,2)=pos(:,2)-mean(pos(1:50,2));
 neg(:,2)=neg(:,2)-mean(neg(1:50,2));
 
 %%%%%Time indexing block, important to keep track of%%%%%%%%
-%time_index=186; %From peak in amp grating data, default for MIT data
-time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
+time_index=186; %From peak in amp grating data, default for MIT data
+%time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
+%time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
 
 time_naught=neg(time_index,1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
