@@ -1,4 +1,4 @@
-function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGS_phase_analysis(pos_file,neg_file,grat,start_phase,two_mode,end_time)
+function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGSPhaseAnalysis(pos_file,neg_file,grat,start_phase,two_mode,end_time,overlay1,overlay2)
 %   Function to determine thermal diffusivity from phase grating TGS data
 %   Data is saved in two files, positive (with one heterodyne phsae) and
 %       negative (with another), must provide both files
@@ -20,10 +20,10 @@ function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGS_pha
 %Settings for various plotting and output options to be set by boolean arguments
 find_max=0;
 plotty=0;
-plot_trace=0;
-plot_psd=0;
-plot_final=0;
-print_final_fit=0;
+plot_trace=1;
+plot_psd=1;
+plot_final=1;
+print_final_fit=1;
 two_detectors=1;
 q=2*pi/(grat*10^(-6));
 tstep=5e-11; %Set by scope used for data collection
@@ -44,8 +44,8 @@ derivative=0;
 %%%%%%%%%%%%%%%%%%%
 %if fitting tau need to select one of three options for start point
 tau_final_fit=1;
-start_constant=0;
-start_lorentz=1;
+start_constant=1;
+start_lorentz=0;
 start_walkoff=0;
 %if not fitting tau, need to select one of two constant schemes
 fixed_tau=0;
@@ -127,8 +127,8 @@ pos(:,2)=pos(:,2)-mean(pos(1:50,2));
 neg(:,2)=neg(:,2)-mean(neg(1:50,2));
 
 %%%%%Time indexing block, important to keep track of%%%%%%%%
-time_index=186; %From peak in amp grating data, default for MIT data
-%time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
+%time_index=186; %From peak in amp grating data, default for MIT data
+time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
 %time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
 
 time_naught=neg(time_index,1);
@@ -165,6 +165,7 @@ if plot_trace
         'FontSize',20,...
         'FontName','Helvetica')
 end
+saveas(gcf,"TGS_Trace.png")
 
 if start_phase==0
     diffusivity=0;
@@ -293,9 +294,9 @@ else
         
         if tau_final_fit
             if start_constant
-                low_t=1e-8;
+                low_t=5e-9;
                 up_t=7e-7;
-                start_tau=2e-8;
+                start_tau=1e-8;
             elseif start_lorentz
                 low_t=tau(1)*(1-percent_range_t);
                 up_t=tau(1)*(1+percent_range_t);
@@ -315,6 +316,8 @@ else
                 start_tau=tau(2);
             end
             
+%            LB2=[0 low_bound(1) low_bound(2) 0 -2*pi low_t -5e-3];
+%            UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 5e-3];
             LB2=[0 low_bound(1) low_bound(2) 0 -2*pi low_t -5e-3];
             UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 5e-3];
             ST2=[.05 diffusivity beta 0.05 0 start_tau 0];
@@ -381,36 +384,54 @@ else
             end
             %%%%%%%%%%%%%%%
             figure()
-            plot((neg(:,1)-time_naught)*10^9,(pos(:,2)-neg(:,2)-long_base)*10^3/amp_factor,'k-','LineWidth',1.35)
+            plot((neg(:,1)-time_naught)*10^9,(pos(:,2)-neg(:,2)-long_base)*10^3/amp_factor,'k-','LineWidth',5,'DisplayName','Raw TGS Trace')
             hold on
             %plot vertical line at start time
             %     plot([fixed_short(start_index_master,1) fixed_short(start_index_master,1)]*10^9,ylim,'b--')
             %     hold on
-            plot(fixed_short(start_index2:end,1)*10^9,(f2(fixed_short(start_index2:end,1)))*10^3/amp_factor,'r--','LineWidth',1.45)
+            plot(fixed_short(start_index2:end,1)*10^9,(f2(fixed_short(start_index2:end,1)))*10^3/amp_factor,'r--','LineWidth',5,'DisplayName','Full Functional Fit')
             hold on
-            plot(fixed_short(start_index2:end,1)*10^9,(f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor,'-','Color',[0 0 0.75],'LineWidth',1.45)
+            plot(fixed_short(start_index2:end,1)*10^9,(f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor,'-','Color',[0 0 0.75],'LineWidth',5,'DisplayName','Thermal Fit')
             hold on
             xlim([-5 end_time*10^9])
 %             xlim([-5 70])
-            ylim([-0.1 1])
-            set(gcf,'Position',[0 0 400 300])
+%            ylim([-0.1 1])
+            set(gcf,'Position',[0 0 1920 1080])
+	    annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+	    annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay1,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
             hold on
             set(gca,...
                 'FontUnits','points',...
                 'FontWeight','normal',...
-                'FontSize',16,...
+                'FontSize',30,...
                 'FontName','Helvetica',...
-                'LineWidth',1.25)
-            ylabel({'Amplitude [a.u.]'},...
+                'LineWidth',5)
+            ylabel({'Signal Amplitude [mV]'},...
                 'FontUnits','points',...
-                'FontSize',20,...
+                'FontSize',40,...
                 'FontName','Helvetica')
             xlabel({'Time [ns]'},...
                 'FontUnits','points',...
-                'FontSize',20,...
+                'FontSize',40,...
                 'FontName','Helvetica')
+	    legend('Location','northwest')
+
+% Display the already-made FFT as an inset image
+
+	    axes('pos',[.48 .48 .5 .5])
+	    imshow('TGS_FFT.png')
+	    saveas(gcf,strcat(pos_file,"TGS_Final_Fit.png"))
         end
         
     end
     
 end
+
+fileID = fopen('Compiled-Analysis.csv','a');
+fprintf(fileID, '%s',pos_file);
+fprintf(fileID, ',%E', freq_final);
+fprintf(fileID, ',%E', freq_error);
+fprintf(fileID, ',%E', diffusivity);
+fprintf(fileID, ',%E', diffusivity_err);
+fprintf(fileID, ',%E,%E,%E\n', tau);
+fclose(fileID);

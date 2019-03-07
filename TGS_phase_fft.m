@@ -6,11 +6,11 @@ function [fft] = TGS_phase_fft(pos_file,neg_file,grat,psd_out)
 %   psd: if psd=1, save out power spectrum else, save out fft magnitude
 
 if nargin<4
-    psd_out=0;
+    psd_out=1;
 end
 
 %Boolean options for plotting and processing
-derivative=1;
+derivative=0;
 plotty=0;
 plotfft=1;
 saveout=0;
@@ -111,14 +111,18 @@ nfft=length(flat_pad(:,2));
 %periodogram.
 [psd,freq]=periodogram(flat_pad(:,2),rectwin(nfft),nfft,fs); %periodogram method
 
-%Don't save out DC spike in FFT/PSD
-if psd_out
-    amp=psd(5:end);
-else
-    amp=sqrt(psd(5:end));
+for i = 1:250
+    psd(i)=0;
 end
 
-fft=[freq(5:end) amp];
+%Don't save out DC spike in FFT/PSD
+if psd_out
+    amp=psd(1:end);
+else
+    amp=sqrt(psd(1:end));
+end
+
+fft=[freq(1:end) amp];
 
 if saveout
     dlmwrite('dat_spec.txt',out);
@@ -127,8 +131,8 @@ end
 if plotfft
     figure()
     hold on
-    plot(freq(5:end),amp,'r');
-    xlim([0 1.7e9]);
+    plot(freq(1:end),amp,'r');
+    xlim([5e8 1.7e9]);
 end
 
 end
