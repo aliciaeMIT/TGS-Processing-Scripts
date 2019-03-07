@@ -427,7 +427,7 @@ else
     
 end
 
-fileID = fopen('Compiled-Analysis.csv','a');
+fileID = fopen('Analysis/Compiled-Analysis.csv','a');
 fprintf(fileID, '%s',pos_file);
 fprintf(fileID, ',%E', freq_final);
 fprintf(fileID, ',%E', freq_error);

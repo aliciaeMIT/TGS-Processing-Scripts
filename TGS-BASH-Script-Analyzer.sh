@@ -4,12 +4,18 @@
 
 rm GoGo.m
 cp GoGo-Header.m GoGo.m
-rm Compiled-Analysis.csv
-touch Compiled-Analysis.csv
+rm Analysis/Compiled-Analysis.csv
+touch Analysis/Compiled-Analysis.csv
 
 ## Initialize column headers for the final output
 
-echo "File Name, Peak Frequency (Hz), Frequency Error, Thermal Diffusivity (m2/s), Thermal Error, Tau\n" >> Compiled-Analysis.csv
+echo "File Name, Peak Frequency (Hz), Frequency Error, Thermal Diffusivity (m2/s), Thermal Error, Tau\n" >> Analysis/Compiled-Analysis.csv
+
+## Enter the Analysis directory, and remove any underscores which make MATLAB barf
+
+cd Analysis
+rename 's/_/-/g' *.txt
+cd ..
 
 ## Get each POS file in the Analysis directory
 
@@ -51,10 +57,12 @@ do
 	StudyName="$(grep 'Study Name' $filename_pos)"
 #	StudyName="$(echo $StudyName | cut -c 9- | tr -d '\n\r')"
 	StudyName="$(echo $StudyName | sed 's/^.*Name//' | tr -d '\r\n\ ')"
+	StudyName="$(echo $StudyName | sed 's/_/-/g')"
 	echo $StudyName
 	SampleName="$(grep 'Sample Name' $filename_pos)"
 #	SampleName="$(echo $SampleName | cut -c 9- | tr -d '\n\r')"
 	SampleName="$(echo $SampleName | sed 's/^.*Name//' | tr -d '\r\n\ ')"
+	SampleName="$(echo $SampleName | sed 's/_/-/g')"
 	echo $SampleName
 	Date="$(grep -nrH 'Date' $filename_pos)"
 #	Date="$(echo $Date | cut -c 16- | tr -d '\n\r')"
