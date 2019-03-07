@@ -89,3 +89,7 @@ echo "quit;" >> GoGo.m
 
 /usr/local/MATLAB/R2018b/bin/./matlab -nodisplay -nodesktop -r "GoGo"
 
+## Clean up some temporary files
+
+rm TGS_FFT.png
+rm TGS_Trace.png
