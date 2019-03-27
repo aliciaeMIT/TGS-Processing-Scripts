@@ -17,6 +17,24 @@ cd Analysis
 rename 's/_/-/g' *.txt
 cd ..
 
+usergrating=0
+
+## Parse command line arguments. Currently just the imposed grating spacing.
+
+	while [ "$1" != "" ]; do
+	    case $1 in
+	        -g | --grating )        shift
+	                                usergrating=$1
+	                                ;;
+	        -h | --help )           usage
+	                                exit
+	                                ;;
+	        * )                     usage
+	                                exit 1
+	    esac
+	    shift
+	done
+
 ## Get each POS file in the Analysis directory
 
 for filename in Analysis/*POS*.txt;
@@ -31,27 +49,16 @@ do
 ## Extract the rough grating spacing from the filename, if one wasn't supplied as an argument
 ## First, extract the grating from the filename
 
-	temp=${filename_pos%%um-*}
-	grating="$(echo $temp | rev | cut -c -4 | rev)"
-	# echo $temp
+	if (( $(echo "$usergrating == 0" | bc -l) ))
+	then
+		temp=${filename_pos%%um-*}
+		grating="$(echo $temp | rev | cut -c -4 | rev)"
+		# echo $temp
+	else
+		grating=$usergrating
+	fi
 	echo Grating = $grating
 	
-## Now check to see if the user supplied one. If so, overwrite it.
-
-	while [ "$1" != "" ]; do
-	    case $1 in
-	        -g | --grating )        shift
-	                                grating=$1
-	                                ;;
-	        -h | --help )           usage
-	                                exit
-	                                ;;
-	        * )                     usage
-	                                exit 1
-	    esac
-	    shift
-	done
-
 ## Extract interesting bits of info to overlay on the final image
 
 	StudyName="$(grep 'Study Name' $filename_pos)"
