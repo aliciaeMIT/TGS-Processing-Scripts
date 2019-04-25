@@ -1,0 +1,5 @@
+#SAW speed presented: run (Random Seed) - SAW speed 
+
+1 (521):   3064.44917151
+2 (2214):   3059.54363528
+3 (5570):   3064.69983481

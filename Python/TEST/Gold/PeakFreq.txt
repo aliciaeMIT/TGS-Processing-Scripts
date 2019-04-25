@@ -1,0 +1,5 @@
+#Peak frequency presented: run (Random Seed) - Peak Frequency 
+
+1 (521):   82.4916807341
+2 (2214):   82.3523404858
+3 (5570):   82.4787104834
