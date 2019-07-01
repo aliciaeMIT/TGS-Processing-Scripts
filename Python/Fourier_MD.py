@@ -12,7 +12,7 @@ diff_sig_plot=1                                 # Positive signal minus negative
 diff_sig_plot_minus_decay=1                     # Positive signal minus negative Signal minus decay
 Transform_plot=1                                # Fourier Transform
 Gauss_plot=0                                    # Gaussian Fit of the Peak Frequency
-temp_profs=1                                    # Temperature profiles
+temp_profs=0                                    # Temperature profiles
 
 
 ## Conditions
@@ -60,11 +60,10 @@ def funcgauss(x, a, b, c):
 def functimecon(x, a, b, c):
     return a * np.exp(-x/(b*1e-9)) + c
 
-###################### Begin Data Reading #######################
+###################### Begin Data Reading For Acoustic Fit #######################
 
 dt=0.2e-12
 f=open('COM.txt','r')
-h=open('TEMP.txt','r')
 f.readline()
 wavelengthCOM=float(f.readline().split()[18])/10
 freqcut=MAXSAWv/wavelengthCOM
@@ -72,7 +71,6 @@ f.seek(0)
 g=open('DATA.txt','w')
 g.write('#Parameters of MD run \n')
 lengthCOM=len(f.readlines())-1
-lengthTEMP=len(h.readlines())-1
 y=np.linspace(0.0,0.0,lengthCOM)
 NewY=np.linspace(0.0,0.0,lengthCOM)
 COM1z=np.linspace(0.0,0.0,lengthCOM) # z dimension for signal
@@ -106,31 +104,6 @@ COM4x=(COM4x-COM1x)*10**(-10)
 COM5x=(COM5x-COM1x)*10**(-10)
 COM1x=(COM1x-COM1x)*10**(-10)
 
-
-temptime=np.linspace(0.0,0.0,lengthTEMP)
-temp1=np.linspace(0.0,0.0,lengthTEMP)
-temp2=np.linspace(0.0,0.0,lengthTEMP)
-temp3=np.linspace(0.0,0.0,lengthTEMP)
-temp4=np.linspace(0.0,0.0,lengthTEMP)
-temp5=np.linspace(0.0,0.0,lengthTEMP)
-h.seek(0)
-h.readline()
-for i in xrange(lengthTEMP):            # Read in the TEMP.txt data
-    line=h.readline().split()
-    temptime[i]=float(line[0])
-    temp1[i]=float(line[1])
-    temp2[i]=float(line[2])
-    temp3[i]=float(line[3])
-    temp4[i]=float(line[4])
-    temp5[i]=float(line[5])
-
-temp1=savitzky_golay(temp1,11,4)
-temp2=savitzky_golay(temp2,11,4)
-temp3=savitzky_golay(temp3,11,4)
-temp4=savitzky_golay(temp4,11,4)
-temp5=savitzky_golay(temp5,11,4)
-
-temptime=(temptime-temptime[0])*10**(-12)
 
 ################################## End Data Reading ###################################
 
@@ -217,39 +190,69 @@ except Exception:
 
 
 #######  Fit and Print the acoustic damping constant values
-qo = (2*np.pi) / (wavelengthCOM*10**(-9))
-start_time = temp_index * (temptime[1]-temptime[0])
 
 
 # Fit for thermal diffusivity
-def funcThermal1(x, a, k, c, b):
-    return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM1x))) + c
+if temp_profs:
+    h=open('TEMP.txt','r')
+    lengthTEMP=len(h.readlines())-1
 
-def funcThermal2(x, a, k, c, b):
-    return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM2x))) + c
+    temptime=np.linspace(0.0,0.0,lengthTEMP)
+    temp1=np.linspace(0.0,0.0,lengthTEMP)
+    temp2=np.linspace(0.0,0.0,lengthTEMP)
+    temp3=np.linspace(0.0,0.0,lengthTEMP)
+    temp4=np.linspace(0.0,0.0,lengthTEMP)
+    temp5=np.linspace(0.0,0.0,lengthTEMP)
+    h.seek(0)
+    h.readline()
+    for i in xrange(lengthTEMP):            # Read in the TEMP.txt data
+        line=h.readline().split()
+        temptime[i]=float(line[0])
+        temp1[i]=float(line[1])
+        temp2[i]=float(line[2])
+        temp3[i]=float(line[3])
+        temp4[i]=float(line[4])
+        temp5[i]=float(line[5])
 
-def funcThermal3(x, a, k, c, b):
-    return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM3x))) + c
+    temp1=savitzky_golay(temp1,11,4)
+    temp2=savitzky_golay(temp2,11,4)
+    temp3=savitzky_golay(temp3,11,4)
+    temp4=savitzky_golay(temp4,11,4)
+    temp5=savitzky_golay(temp5,11,4)
 
-def funcThermal4(x, a, k, c, b):
-    return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM4x))) + c
+    temptime=(temptime-temptime[0])*10**(-12)
+    qo = (2*np.pi) / (wavelengthCOM*10**(-9))
+    start_time = temp_index * (temptime[1]-temptime[0])
 
-def funcThermal5(x, a, k, c, b):
-    return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM5x))) + c
+    def funcThermal1(x, a, k, c, b):
+        return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM1x))) + c
 
-poptCOM1, pcovCOM1 = curve_fit(funcThermal1, temptime[temp_index:], temp1[temp_index:],maxfev=10000)
-poptCOM2, pcovCOM2 = curve_fit(funcThermal2, temptime[temp_index:], temp2[temp_index:],maxfev=10000)
-poptCOM3, pcovCOM3 = curve_fit(funcThermal3, temptime[temp_index:], temp3[temp_index:],maxfev=10000)
-poptCOM4, pcovCOM4 = curve_fit(funcThermal4, temptime[temp_index:], temp4[temp_index:],maxfev=10000)
-poptCOM5, pcovCOM5 = curve_fit(funcThermal5, temptime[temp_index:], temp5[temp_index:],maxfev=10000)
+    def funcThermal2(x, a, k, c, b):
+        return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM2x))) + c
+
+    def funcThermal3(x, a, k, c, b):
+        return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM3x))) + c
+
+    def funcThermal4(x, a, k, c, b):
+        return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM4x))) + c
+
+    def funcThermal5(x, a, k, c, b):
+        return ( a / np.sqrt(x + start_time)) * (1 + b * np.exp(- (qo**2) * k * (x + start_time) * 1e-6) * np.cos(qo * np.mean(COM5x))) + c
+
+    poptCOM1, pcovCOM1 = curve_fit(funcThermal1, temptime[temp_index:], temp1[temp_index:],maxfev=10000)
+    poptCOM2, pcovCOM2 = curve_fit(funcThermal2, temptime[temp_index:], temp2[temp_index:],maxfev=10000)
+    poptCOM3, pcovCOM3 = curve_fit(funcThermal3, temptime[temp_index:], temp3[temp_index:],maxfev=10000)
+    poptCOM4, pcovCOM4 = curve_fit(funcThermal4, temptime[temp_index:], temp4[temp_index:],maxfev=10000)
+    poptCOM5, pcovCOM5 = curve_fit(funcThermal5, temptime[temp_index:], temp5[temp_index:],maxfev=10000)
 
 
-ks=np.array([poptCOM1[1],poptCOM2[1],poptCOM3[1],poptCOM4[1],poptCOM5[1]])
-kavg=np.mean(ks)
-kstd=np.std(ks)
+    ks=np.array([poptCOM1[1],poptCOM2[1],poptCOM3[1],poptCOM4[1],poptCOM5[1]])
+    kavg=np.mean(ks)
+    kstd=np.std(ks)
 
-g.write( 'Thermal Diffusivity (m^2/s):\n ' + str(kavg*1e-6) + '  (' + str(kstd*1e-6) + ')\n' )
+    g.write( 'Thermal Diffusivity (m^2/s):\n ' + str(kavg*1e-6) + '  (' + str(kstd*1e-6) + ')\n' )
 
+    h.close()
 
 ################################## Plots ################################
 
