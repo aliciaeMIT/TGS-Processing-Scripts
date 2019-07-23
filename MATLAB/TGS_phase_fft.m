@@ -111,7 +111,7 @@ nfft=length(flat_pad(:,2));
 %periodogram.
 [psd,freq]=periodogram(flat_pad(:,2),rectwin(nfft),nfft,fs); %periodogram method
 
-for i = 1:250
+for i = 1:1000
     psd(i)=0;
 end
 

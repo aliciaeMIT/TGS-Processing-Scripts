@@ -9,4 +9,4 @@ overlay2=<SAMPLESTAMP>
 
 posstr=<FILENAME-POS>;
 negstr=<FILENAME-NEG>;
-TGSPhaseAnalysis(posstr,negstr,grat,2,0,2e-7,overlay1,overlay2);
+TGSPhaseAnalysis(posstr,negstr,grat,2,1,2e-7,overlay1,overlay2);

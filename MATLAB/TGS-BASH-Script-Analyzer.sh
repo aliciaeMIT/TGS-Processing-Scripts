@@ -17,7 +17,7 @@ cd Analysis
 rename 's/_/-/g' *.txt
 cd ..
 
-usergrating=0
+usergrating=0.0
 
 ## Parse command line arguments. Currently just the imposed grating spacing.
 
@@ -51,8 +51,8 @@ do
 
 	if (( $(echo "$usergrating == 0" | bc -l) ))
 	then
-		temp=${filename_pos%%um-*}
-		grating="$(echo $temp | rev | cut -c -4 | rev)"
+		temp=${filename_pos%%0um-*}
+		grating="$(echo $temp | rev | cut -c -3 | rev)"
 		# echo $temp
 	else
 		grating=$usergrating
