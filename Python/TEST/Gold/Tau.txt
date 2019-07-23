@@ -1,0 +1,5 @@
+#Acoustic Damping constant presented: run (Random Seed) - Tau 
+
+1 (521):   0.629687160003
+2 (2214):   0.683873242876
+3 (5570):   0.63487145929

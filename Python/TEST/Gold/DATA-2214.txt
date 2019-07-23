@@ -1,0 +1,13 @@
+#Parameters of MD run 
+Peak Frequency Guess (GHz):
+ 82.6887169912
+Peak Frequency Fit (GHz):
+ 82.3523404858
+WavelengthCOM (nm):
+ 37.1518722751
+SAW speed (m/s):
+ 3059.54363528
+Acoustic Damping Constant (ns):
+ 0.683873242876
+Thermal Diffusivity (m^2/s):
+ 4.43220179898e-07  (3.20390313721e-07)
