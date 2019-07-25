@@ -6,7 +6,7 @@ f2=0.6		# Fraction of Ni atoms
 f3=0.3		# Fraction of Cr atoms
 
 # Read in the RDF file and skip all lines - 1 to get to very end of the file
-f=open('rdf-1202.txt','r')
+f=open('rdf.txt','r')
 g=open('SRO_params.txt','w')
 length=len(f.readlines())
 f.seek(0)
