@@ -65,7 +65,7 @@ def functimecon(x, a, b, c):
 dt=0.2e-12
 f=open('COM.txt','r')
 f.readline()
-wavelengthCOM=float(f.readline().split()[18])/10
+wavelengthCOM=float(f.readline().split()[19])/10
 freqcut=MAXSAWv/wavelengthCOM
 f.seek(0)
 g=open('DATA.txt','w')
@@ -112,7 +112,7 @@ COM1z=COM1z-COM1z[0]
 COM5z=COM5z-COM5z[0]
 
 try:        ######## Fit the exponential decay of POS-NEG ##########
-    popt, pcov = curve_fit(func, t[0:lengthCOM], y[0:lengthCOM])
+    popt, pcov = curve_fit(func, t[0:lengthCOM], y[0:lengthCOM], maxfev=1000)
 except Exception:
     print 'COULD NOT FIT EXPONENTIAL DECAY'
 
@@ -152,7 +152,7 @@ g.write( 'Peak Frequency Guess (GHz):\n ' + str(peakfreq_guess) + '\n')
 
 #######  Use a gaussian fit to find peak frequency based on peak frequency guess
 try:
-    popt2, pcov2 = curve_fit(funcgauss, tf[index-numsteps:index+numsteps]-tf[index], yplot[index-numsteps:index+numsteps])
+    popt2, pcov2 = curve_fit(funcgauss, tf[index-numsteps:index+numsteps]-tf[index], yplot[index-numsteps:index+numsteps], maxfev=1000)
     g.write( 'Peak Frequency Fit (GHz):\n ' + str(popt2[1]+tf[index]) + '\n')
 except Exception:
     g.write( 'Peak Frequency Fit (GHz):\n ' + 'COULD NOT FIT' + '\n')
@@ -183,7 +183,7 @@ for i in xrange(int(numiter)):
 
 #######  Fit and Print the acoustic damping constant values
 try:
-    popt3, pcov3 = curve_fit(functimecon, shortx, localmaxpts)
+    popt3, pcov3 = curve_fit(functimecon, shortx, localmaxpts, maxfev=1000)
     g.write( 'Acoustic Damping Constant (ns):\n ' + str(popt3[1]) + '\n' )
 except Exception:
     g.write( 'Acoustic Damping Constant (ns):\n ' + 'COULD NOT FIT' + '\n' )
@@ -275,7 +275,7 @@ if diff_sig_plot:       # Positive signal minus negative Signal
     plt.title('Positive Signal minus Negative Signal')
     plt.plot(t/1e-9, y)
     plt.plot(t/1e-9,func(t, *popt))
-    plt.xlim(0,1.5)
+    # plt.xlim(0,1.5)
     plt.grid()
     plt.savefig('Signal.png')
     # plt.show()

@@ -20,10 +20,10 @@ function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGSPhas
 %Settings for various plotting and output options to be set by boolean arguments
 find_max=0;
 plotty=0;
-plot_trace=1;
+plot_trace=0;
 plot_psd=1;
-plot_final=1;
-print_final_fit=1;
+plot_final=0;
+print_final_fit=0;
 two_detectors=1;
 q=2*pi/(grat*10^(-6));
 tstep=5e-11; %Set by scope used for data collection
@@ -89,8 +89,8 @@ if nargin<5
 end
 
 if nargin<6
-    %     end_time=10e-7; %for 50ns base on scope
-    end_time=2e-7; %for 20ns base on scope
+        end_time=5e-7; %for 50ns base on scope
+%     end_time=2e-7; %for 20ns base on scope
 end
 
 %Difference in file write format based on newer or older acquisition. hdr_len should be 16 for the Ge dataset
@@ -118,7 +118,7 @@ neg=dlmread(neg_file,'',hdr_len,0);
 %sometimes written data is off by one time step at the end, chop that off if they do not match
 if length(pos(:,1))>length(neg(:,1))
     pos=pos(1:length(neg(:,1)),:);
-elseif length(neg(:,1))>length(neg(:,1))
+elseif length(neg(:,1))>length(pos(:,1))
     neg=neg(1:length(pos(:,1)),:);
 end
 
@@ -127,9 +127,9 @@ pos(:,2)=pos(:,2)-mean(pos(1:50,2));
 neg(:,2)=neg(:,2)-mean(neg(1:50,2));
 
 %%%%%Time indexing block, important to keep track of%%%%%%%%
-%time_index=186; %From peak in amp grating data, default for MIT data
-time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
-%time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
+% time_index=186; %From peak in amp grating data, default for MIT data
+% time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
+time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
 
 time_naught=neg(time_index,1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -143,6 +143,7 @@ if grat<8
 else
     long_base=0;
 end
+
 
 if plot_trace
     figure()
@@ -164,8 +165,8 @@ if plot_trace
         'FontUnits','points',...
         'FontSize',20,...
         'FontName','Helvetica')
+    saveas(gcf,"TGS_Trace.png")
 end
-saveas(gcf,"TGS_Trace.png")
 
 if start_phase==0
     diffusivity=0;
@@ -397,8 +398,8 @@ else
 %             xlim([-5 70])
 %            ylim([-0.1 1])
             set(gcf,'Position',[0 0 1920 1080])
-	    annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
-	    annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay1,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+% 	    annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+% 	    annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay1,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
             hold on
             set(gca,...
                 'FontUnits','points',...
@@ -427,11 +428,11 @@ else
     
 end
 
-fileID = fopen('Analysis/Compiled-Analysis.csv','a');
-fprintf(fileID, '%s',pos_file);
-fprintf(fileID, ',%E', freq_final);
-fprintf(fileID, ',%E', freq_error);
-fprintf(fileID, ',%E', diffusivity);
-fprintf(fileID, ',%E', diffusivity_err);
-fprintf(fileID, ',%E,%E,%E\n', tau);
-fclose(fileID);
+% fileID = fopen('Analysis/Compiled-Analysis.csv','a');
+% fprintf(fileID, '%s',pos_file);
+% fprintf(fileID, ',%E', freq_final);
+% fprintf(fileID, ',%E', freq_error);
+% fprintf(fileID, ',%E', diffusivity);
+% fprintf(fileID, ',%E', diffusivity_err);
+% fprintf(fileID, ',%E,%E,%E\n', tau);
+% fclose(fileID);
