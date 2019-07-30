@@ -127,8 +127,8 @@ pos(:,2)=pos(:,2)-mean(pos(1:50,2));
 neg(:,2)=neg(:,2)-mean(neg(1:50,2));
 
 %%%%%Time indexing block, important to keep track of%%%%%%%%
-%time_index=186; %From peak in amp grating data, default for MIT data
-time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
+time_index=186; %From peak in amp grating data, default for MIT data
+%time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
 %time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
 
 time_naught=neg(time_index,1);
@@ -218,7 +218,7 @@ else
         
         %Fitting parameters for initial naive fit
         LB=[0 0];
-        UB=[1 10^-4];
+        UB=[1 5*10^-4];   % Increased to account for silver-alloys, which are REALLY HIGH thermal diffusivity
         ST=[.05 5*10^-6];
         
         OPS=fitoptions('Method','NonLinearLeastSquares','Lower',LB,'Upper',UB,'Start',ST);
@@ -250,7 +250,7 @@ else
             %Conduct initial parameter estimation without using an sin(x) contribution to the fit
             
             LB1=[0 0];
-            UB1=[1 10^-4];
+            UB1=[1 5*10^-4];   % Increased to account for silver-alloys, which are REALLY HIGH thermal diffusivity
             ST1=[.05 10^-5];
             
             OPS1=fitoptions('Method','NonLinearLeastSquares','Lower',LB1,'Upper',UB1,'Start',ST1);
