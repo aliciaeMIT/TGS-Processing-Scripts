@@ -31,10 +31,10 @@ do
 		sed -i -e "s/TempProf.png/TempProf-${i}.png/g" ./Fourier_MD-${i}.py
 		python Fourier_MD-${i}.py
 
-        #Short Range Order
-        sed -e "s/rdf.txt/rdf-${i}.txt/g" ./SRO.py > SRO-${i}.py
-        sed -i -e "s/SRO_params.txt/SRO_params-${i}.txt/g" ./SRO-${i}.py
-        python SRO-${i}.py
+    #Short Range Order
+    sed -e "s/rdf.txt/rdf-${i}.txt/g" ./SRO.py > SRO-${i}.py
+    sed -i -e "s/SRO_params.txt/SRO_params-${i}.txt/g" ./SRO-${i}.py
+    python SRO-${i}.py
 
 		#Peak Frequency file
 		printf "${count} (${i}):  " >> ./PeakFreq.txt
@@ -52,9 +52,9 @@ do
 		printf "${count} (${i}):  " >> ./K.txt
 		sed '13q;d' DATA-${i}.txt >> ./K.txt
 
-        #Total SRO File
-        printf "${count} (${i}):  " >> ./Alpha.txt
-        sed '28q;d' SRO_params-${i}.txt >> ./Alpha.txt
+    #Total SRO File
+    printf "${count} (${i}):  " >> ./Alpha.txt
+    sed '28q;d' SRO_params-${i}.txt >> ./Alpha.txt
 
 		let "count=count+1"
 	fi

@@ -12,7 +12,7 @@ diff_sig_plot=1                                 # Positive signal minus negative
 diff_sig_plot_minus_decay=1                     # Positive signal minus negative Signal minus decay
 Transform_plot=1                                # Fourier Transform
 Gauss_plot=0                                    # Gaussian Fit of the Peak Frequency
-temp_profs=0                                    # Temperature profiles
+temp_profs=1                                    # Temperature profiles
 
 
 ## Conditions
@@ -87,16 +87,16 @@ f.seek(0)
 f.readline()
 for i in xrange(lengthCOM):             # Read in the COM.txt data
     line=f.readline().split()
-    drift=float(line[17])
+    drift=float(line[18])
     # Signal
-    COM1z[i]=float(line[2])-drift
-    COM5z[i]=float(line[14])-drift
+    COM1z[i]=float(line[3])-drift
+    COM5z[i]=float(line[15])-drift
     # Temperature
-    COM1x[i]=float(line[0])
-    COM2x[i]=float(line[3])
-    COM3x[i]=float(line[6])
-    COM4x[i]=float(line[9])
-    COM5x[i]=float(line[12])
+    COM1x[i]=float(line[1])
+    COM2x[i]=float(line[4])
+    COM3x[i]=float(line[7])
+    COM4x[i]=float(line[10])
+    COM5x[i]=float(line[13])
 y=COM1z-COM5z
 COM2x=(COM2x-COM1x)*10**(-10)
 COM3x=(COM3x-COM1x)*10**(-10)
