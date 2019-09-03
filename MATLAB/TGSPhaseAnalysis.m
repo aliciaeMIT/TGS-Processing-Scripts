@@ -20,10 +20,10 @@ function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGSPhas
 %Settings for various plotting and output options to be set by boolean arguments
 find_max=0;
 plotty=0;
-plot_trace=0;
+plot_trace=1;
 plot_psd=1;
 plot_final=1;
-print_final_fit=0;
+print_final_fit=1;
 two_detectors=1;
 q=2*pi/(grat*10^(-6));
 tstep=5e-11; %Set by scope used for data collection
@@ -89,7 +89,7 @@ if nargin<5
 end
 
 if nargin<6
-%         end_time=5e-7; %for 50ns base on scope
+    %     end_time=10e-7; %for 50ns base on scope
     end_time=2e-7; %for 20ns base on scope
 end
 
@@ -118,7 +118,7 @@ neg=dlmread(neg_file,'',hdr_len,0);
 %sometimes written data is off by one time step at the end, chop that off if they do not match
 if length(pos(:,1))>length(neg(:,1))
     pos=pos(1:length(neg(:,1)),:);
-elseif length(neg(:,1))>length(pos(:,1))
+elseif length(neg(:,1))>length(neg(:,1))
     neg=neg(1:length(pos(:,1)),:);
 end
 
@@ -128,8 +128,8 @@ neg(:,2)=neg(:,2)-mean(neg(1:50,2));
 
 %%%%%Time indexing block, important to keep track of%%%%%%%%
 time_index=186; %From peak in amp grating data, default for MIT data
-% time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
-% time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
+%time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
+%time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
 
 time_naught=neg(time_index,1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -164,8 +164,8 @@ if plot_trace
         'FontUnits','points',...
         'FontSize',20,...
         'FontName','Helvetica')
-    saveas(gcf,"TGS_Trace.png")
 end
+saveas(gcf,"TGS_Trace.png")
 
 if start_phase==0
     diffusivity=0;
@@ -218,7 +218,7 @@ else
         
         %Fitting parameters for initial naive fit
         LB=[0 0];
-        UB=[1 10^-4];
+        UB=[1 5*10^-4];   % Increased to account for silver-alloys, which are REALLY HIGH thermal diffusivity
         ST=[.05 5*10^-6];
         
         OPS=fitoptions('Method','NonLinearLeastSquares','Lower',LB,'Upper',UB,'Start',ST);
@@ -250,7 +250,7 @@ else
             %Conduct initial parameter estimation without using an sin(x) contribution to the fit
             
             LB1=[0 0];
-            UB1=[1 10^-4];
+            UB1=[1 5*10^-4];   % Increased to account for silver-alloys, which are REALLY HIGH thermal diffusivity
             ST1=[.05 10^-5];
             
             OPS1=fitoptions('Method','NonLinearLeastSquares','Lower',LB1,'Upper',UB1,'Start',ST1);
@@ -388,7 +388,7 @@ else
             hold on
             %plot vertical line at start time
             %     plot([fixed_short(start_index_master,1) fixed_short(start_index_master,1)]*10^9,ylim,'b--')
-%             hold on
+            %     hold on
             plot(fixed_short(start_index2:end,1)*10^9,(f2(fixed_short(start_index2:end,1)))*10^3/amp_factor,'r--','LineWidth',5,'DisplayName','Full Functional Fit')
             hold on
             plot(fixed_short(start_index2:end,1)*10^9,(f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor,'-','Color',[0 0 0.75],'LineWidth',5,'DisplayName','Thermal Fit')
@@ -397,8 +397,8 @@ else
 %             xlim([-5 70])
 %            ylim([-0.1 1])
             set(gcf,'Position',[0 0 1920 1080])
-% 	    annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
-% 	    annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay1,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+	    annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+	    annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay1,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
             hold on
             set(gca,...
                 'FontUnits','points',...
@@ -414,7 +414,7 @@ else
                 'FontUnits','points',...
                 'FontSize',40,...
                 'FontName','Helvetica')
-	    legend('Location','southwest')
+	    legend('Location','northwest')
 
 % Display the already-made FFT as an inset image
 
@@ -427,11 +427,11 @@ else
     
 end
 
-% fileID = fopen('Analysis/Compiled-Analysis.csv','a');
-% fprintf(fileID, '%s',pos_file);
-% fprintf(fileID, ',%E', freq_final);
-% fprintf(fileID, ',%E', freq_error);
-% fprintf(fileID, ',%E', diffusivity);
-% fprintf(fileID, ',%E', diffusivity_err);
-% fprintf(fileID, ',%E,%E,%E\n', tau);
-% fclose(fileID);
+fileID = fopen('Analysis/Compiled-Analysis.csv','a');
+fprintf(fileID, '%s',pos_file);
+fprintf(fileID, ',%E', freq_final);
+fprintf(fileID, ',%E', freq_error);
+fprintf(fileID, ',%E', diffusivity);
+fprintf(fileID, ',%E', diffusivity_err);
+fprintf(fileID, ',%E,%E,%E\n', tau);
+fclose(fileID);
