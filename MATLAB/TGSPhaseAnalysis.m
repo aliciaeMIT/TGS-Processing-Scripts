@@ -22,7 +22,7 @@ find_max=0;
 plotty=0;
 plot_trace=0;
 plot_psd=1;
-plot_final=0;
+plot_final=1;
 print_final_fit=0;
 two_detectors=1;
 q=2*pi/(grat*10^(-6));
@@ -89,8 +89,8 @@ if nargin<5
 end
 
 if nargin<6
-        end_time=5e-7; %for 50ns base on scope
-%     end_time=2e-7; %for 20ns base on scope
+%         end_time=5e-7; %for 50ns base on scope
+    end_time=2e-7; %for 20ns base on scope
 end
 
 %Difference in file write format based on newer or older acquisition. hdr_len should be 16 for the Ge dataset
@@ -127,9 +127,9 @@ pos(:,2)=pos(:,2)-mean(pos(1:50,2));
 neg(:,2)=neg(:,2)-mean(neg(1:50,2));
 
 %%%%%Time indexing block, important to keep track of%%%%%%%%
-% time_index=186; %From peak in amp grating data, default for MIT data
+time_index=186; %From peak in amp grating data, default for MIT data
 % time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
-time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
+% time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
 
 time_naught=neg(time_index,1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -143,7 +143,6 @@ if grat<8
 else
     long_base=0;
 end
-
 
 if plot_trace
     figure()
@@ -389,7 +388,7 @@ else
             hold on
             %plot vertical line at start time
             %     plot([fixed_short(start_index_master,1) fixed_short(start_index_master,1)]*10^9,ylim,'b--')
-            %     hold on
+%             hold on
             plot(fixed_short(start_index2:end,1)*10^9,(f2(fixed_short(start_index2:end,1)))*10^3/amp_factor,'r--','LineWidth',5,'DisplayName','Full Functional Fit')
             hold on
             plot(fixed_short(start_index2:end,1)*10^9,(f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor,'-','Color',[0 0 0.75],'LineWidth',5,'DisplayName','Thermal Fit')
@@ -415,7 +414,7 @@ else
                 'FontUnits','points',...
                 'FontSize',40,...
                 'FontName','Helvetica')
-	    legend('Location','northwest')
+	    legend('Location','southwest')
 
 % Display the already-made FFT as an inset image
 

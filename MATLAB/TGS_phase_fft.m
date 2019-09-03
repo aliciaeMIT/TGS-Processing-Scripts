@@ -12,7 +12,7 @@ end
 %Boolean options for plotting and processing
 derivative=0;
 plotty=0;
-plotfft=1;
+plotfft=0;
 saveout=0;
 
 hdr_len=16;
