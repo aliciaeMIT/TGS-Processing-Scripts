@@ -65,7 +65,7 @@ def functimecon(x, a, b, c):
 dt=0.2e-12
 f=open('COM.txt','r')
 f.readline()
-wavelengthCOM=float(f.readline().split()[18])/10
+wavelengthCOM=float(f.readline().split()[19])/10
 freqcut=MAXSAWv/wavelengthCOM
 f.seek(0)
 g=open('DATA.txt','w')
@@ -152,7 +152,7 @@ g.write( 'Peak Frequency Guess (GHz):\n ' + str(peakfreq_guess) + '\n')
 
 #######  Use a gaussian fit to find peak frequency based on peak frequency guess
 try:
-    popt2, pcov2 = curve_fit(funcgauss, tf[index-numsteps:index+numsteps]-tf[index], yplot[index-numsteps:index+numsteps])
+    popt2, pcov2 = curve_fit(funcgauss, tf[index-numsteps:index+numsteps]-tf[index], yplot[index-numsteps:index+numsteps],maxfev=10000)
     g.write( 'Peak Frequency Fit (GHz):\n ' + str(popt2[1]+tf[index]) + '\n')
 except Exception:
     g.write( 'Peak Frequency Fit (GHz):\n ' + 'COULD NOT FIT' + '\n')

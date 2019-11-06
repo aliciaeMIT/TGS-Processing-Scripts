@@ -10,9 +10,13 @@ if nargin<3
     plotty=0;
 end
 
-fft(:,1)=fft(:,1)/10^9; %put everything in units of GHz so fit is not crazy
+st_point=2000; %set to cut off DC spike in fft, if necessary
+end_point=15000; %set to cut off DC spike in fft, if necessary
 
-st_point=50; %set to cut off DC spike in fft, if necessary
+fft(:,1)=fft(:,1)/10^9; %put everything in units of GHz so fit is not crazy
+fft(1:st_point,2)=0;
+fft(end_point:end,2)=0;
+
 
 [max_val,peak_ind]=max(fft(st_point:end,2));
 peak_loc=fft(peak_ind,1);
@@ -43,7 +47,7 @@ if percent_peak_fit~=1
         end
     end
 else
-    neg_ind_final=1;
+    neg_ind_final=st_point;
     pos_ind_final=length(fft(:,1));
 end
 

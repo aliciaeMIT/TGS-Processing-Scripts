@@ -17,7 +17,7 @@ function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGSPhas
 
 %%%%Write this to include a sine variation in the fit by default, but to
 %%%%start the fits from a fixed null point, not time, relative to
-%%%%the initial SAW maximum.
+%%%% the initial SAW maximum.
 
 %Settings for various plotting and output options to be set by boolean arguments
 find_max=0;
