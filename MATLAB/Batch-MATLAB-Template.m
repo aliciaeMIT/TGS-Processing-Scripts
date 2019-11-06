@@ -3,10 +3,14 @@
 dir=cd();
 %%%%%%%%%%%%%%%%%%%
 
-grat=<GRATING>; %in um
-overlay1=<TIMESTAMP>
-overlay2=<SAMPLESTAMP>
+grat=<GRATING>; 	% pulled from metadata in first file, in microns
+overlay1=<TIMESTAMP>	% pulled from metadata in first file
+overlay2=<SAMPLESTAMP>	% pulled from metadata in first file
 
 posstr=<FILENAME-POS>;
 negstr=<FILENAME-NEG>;
-TGSPhaseAnalysis(posstr,negstr,grat,2,1,2e-7,overlay1,overlay2);
+
+EndTime=<END-TIME>	% automatically extracted from first file to analyze
+TimeIndex=<TIME-INDEX>	% automatically derived from first file to analyze
+
+TGSPhaseAnalysis(posstr,negstr,grat,2,0,EndTime,TimeIndex,overlay1,overlay2);

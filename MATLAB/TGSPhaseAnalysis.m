@@ -1,5 +1,5 @@
-function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGSPhaseAnalysis(pos_file,neg_file,grat,start_phase,two_mode,end_time,overlay1,overlay2)
-%   Function to determine thermal diffusivity from phase grating TGS data
+function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGSPhaseAnalysis(pos_file,neg_file,grat,start_phase,two_mode,end_time,time_index,overlay1,overlay2)
+%     Function to determine thermal diffusivity from phase grating TGS data
 %   Data is saved in two files, positive (with one heterodyne phsae) and
 %       negative (with another), must provide both files
 %   pos_file: positive phase TGS data file
@@ -12,6 +12,8 @@ function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGSPhas
 %               frequencies and speeds to be output.
 %   end_time: a shortened fit end time if you do not want ot fit the whole profile.
 %               If argument not given, will be set to default for 200ns data collection window
+%   time_index: the data point number (array index) where the signal starts to rise in earnest.
+%		If argument is not given, it will be set to default for the 20ns/div value: 186
 
 %%%%Write this to include a sine variation in the fit by default, but to
 %%%%start the fits from a fixed null point, not time, relative to
@@ -89,8 +91,11 @@ if nargin<5
 end
 
 if nargin<6
-    %     end_time=10e-7; %for 50ns base on scope
     end_time=2e-7; %for 20ns base on scope
+end
+
+if nargin<7
+   time_index=186; %for 20ns base on scope
 end
 
 %Difference in file write format based on newer or older acquisition. hdr_len should be 16 for the Ge dataset
@@ -127,7 +132,8 @@ pos(:,2)=pos(:,2)-mean(pos(1:50,2));
 neg(:,2)=neg(:,2)-mean(neg(1:50,2));
 
 %%%%%Time indexing block, important to keep track of%%%%%%%%
-time_index=186; %From peak in amp grating data, default for MIT data
+%%%%%%%%%%%%%%%%%% now it's not!!! %%%%%%%%%%%%%%%%%%%%%%%%%
+%time_index=186; %From peak in amp grating data, default for MIT data
 %time_index=180; %For 2018-02-02 Ni beamline Sandia data, use for W beamline data, too
 %time_index=235; %Use for 50ns time_base data (240ns offset) for MIT data, for slower decaying things
 
@@ -304,8 +310,8 @@ else
                     low_t(1)=0;
                 end
                 start_tau=tau(1);
-                LB2=[0 low_bound(1) low_bound(2) 0 -2*pi low_t -5e-3];
-                UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 5e-3];
+                LB2=[0 low_bound(1) low_bound(2) 0 -2*pi low_t -1e-2];
+                UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 1e-2];
                 ST2=[.05 diffusivity beta 0.05 0 tau(1) 0];
             elseif start_walkoff
                 low_t=tau(2)*(1-percent_range_t);
@@ -318,8 +324,8 @@ else
             
 %            LB2=[0 low_bound(1) low_bound(2) 0 -2*pi low_t -5e-3];
 %            UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 5e-3];
-            LB2=[0 low_bound(1) low_bound(2) 0 -2*pi low_t -5e-3];
-            UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 5e-3];
+            LB2=[0 low_bound(1) low_bound(2) 0 -2*pi low_t -1e-2];
+            UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 1e-2];
             ST2=[.05 diffusivity beta 0.05 0 start_tau 0];
             
             OPS2=fitoptions('Method','NonLinearLeastSquares','Lower',LB2,'Upper',UB2,'Start',ST2);
@@ -332,8 +338,8 @@ else
             elseif fixed_walkoff
                 pp_tau=tau(2);
             end
-            LB2=[0 low_bound(1) low_bound(2) 0 -2*pi -5e-3];
-            UB2=[1 up_bound(1) up_bound(2) 10 2*pi 5e-3];
+            LB2=[0 low_bound(1) low_bound(2) 0 -2*pi -1e-2];
+            UB2=[1 up_bound(1) up_bound(2) 10 2*pi 1e-2];
             ST2=[.05 diffusivity beta 0.05 0 0];
             
             OPS2=fitoptions('Method','NonLinearLeastSquares','Lower',LB2,'Upper',UB2,'Start',ST2);

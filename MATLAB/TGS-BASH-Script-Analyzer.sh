@@ -80,14 +80,27 @@ do
 #	Time="$(echo $Time | cut -c 16- | tr -d '\n\r')"
 	Time="$(echo $Time | sed 's/^.*Time//' | tr -d '\r\n\ ')"
 	echo $Time
+	EndTime="$(tail -n 1 $filename_pos | cut -c 1-11)"
+	echo $EndTime
+
+## Grab the first line in the data file which has an "E-2". This is the first data point where the
+## measured voltage is in the 10's of mV. Then grep return the line number, and take the first three
+## digits to capture just this line number. This assumes that this will always be a three digit
+## number, not two or four. Fix if necessary later. Then subtract 17 to account for metadata
+## lines, the resulting number is the index of the data array where the signal starts to rise.
+
+	TimeIndex="$(grep -n -m 1 'E-2' $filename_pos | echo $(cut -c 1-3)-17 | bc)"
+	echo $TimeIndex
 
 ## Create a MATLAB .m file to process the two data files
 
 	sed 's/<GRATING>/'$grating'/'  Batch-MATLAB-Template.m >> GoGo.m
 	sed -i "s|<TIMESTAMP>|\"Date: "$Date", Time: "$Time", \\\lambda="$grating"\\\mu m\"|" GoGo.m
 	sed -i "s|<SAMPLESTAMP>|\"Study:\ "$StudyName"\ Sample:\ "$SampleName"\"|" GoGo.m
-       sed -i "s|<FILENAME-POS>|\""$filename_pos"\"|" GoGo.m
-      sed -i "s|<FILENAME-NEG>|\""$filename_neg"\"|" GoGo.m
+	sed -i "s|<END-TIME>|"$EndTime"|" GoGo.m
+	sed -i "s|<TIME-INDEX>|"$TimeIndex"|" GoGo.m
+	sed -i "s|<FILENAME-POS>|\""$filename_pos"\"|" GoGo.m
+	sed -i "s|<FILENAME-NEG>|\""$filename_neg"\"|" GoGo.m
 	sed -i 's/_/\\_/g' GoGo.m
 
 done
