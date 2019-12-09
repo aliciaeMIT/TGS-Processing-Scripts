@@ -4,12 +4,12 @@
 
 rm GoGo.m
 cp GoGo-Header.m GoGo.m
-rm Analysis/Compiled-Analysis.csv
+# rm Analysis/Compiled-Analysis.csv
 touch Analysis/Compiled-Analysis.csv
 
 ## Initialize column headers for the final output
 
-echo "File Name, Peak Frequency (Hz), Frequency Error, Thermal Diffusivity (m2/s), Thermal Error, Tau\n" >> Analysis/Compiled-Analysis.csv
+# echo "File Name, Peak Frequency (Hz), Frequency Error, Thermal Diffusivity (m2/s), Thermal Error, Tau\n" >> Analysis/Compiled-Analysis.csv
 
 ## Enter the Analysis directory, and remove any underscores which make MATLAB barf
 
@@ -18,6 +18,7 @@ rename 's/_/-/g' *.txt
 cd ..
 
 usergrating=0.0
+usertimeindex=0
 
 ## Parse command line arguments. Currently just the imposed grating spacing.
 
@@ -25,6 +26,9 @@ usergrating=0.0
 	    case $1 in
 	        -g | --grating )        shift
 	                                usergrating=$1
+	                                ;;
+	        -t | --timeindex )      shift
+	                                usertimeindex=$1
 	                                ;;
 	        -h | --help )           usage
 	                                exit
@@ -59,6 +63,14 @@ do
 	fi
 	echo Grating = $grating
 	
+	if (( $(echo "$usertimeindex == 0" | bc -l) ))
+	then
+		timeindex=54	%% Current default value based on Ge calibration
+	else
+		timeindex=$usertimeindex
+	fi
+	echo Time Index = $timeindex
+	
 ## Extract interesting bits of info to overlay on the final image
 
 	StudyName="$(grep 'Study Name' $filename_pos)"
@@ -89,8 +101,8 @@ do
 ## number, not two or four. Fix if necessary later. Then subtract 17 to account for metadata
 ## lines, the resulting number is the index of the data array where the signal starts to rise.
 
-	TimeIndex="$(grep -n -m 1 'E-2' $filename_pos | echo $(cut -c 1-3)-17 | bc)"
-	echo $TimeIndex
+##	TimeIndex="$(grep -n -m 1 'E-2' $filename_pos | echo $(cut -c 1-3)-17 | bc)"
+##	echo $TimeIndex
 
 ## Create a MATLAB .m file to process the two data files
 
@@ -98,7 +110,7 @@ do
 	sed -i "s|<TIMESTAMP>|\"Date: "$Date", Time: "$Time", \\\lambda="$grating"\\\mu m\"|" GoGo.m
 	sed -i "s|<SAMPLESTAMP>|\"Study:\ "$StudyName"\ Sample:\ "$SampleName"\"|" GoGo.m
 	sed -i "s|<END-TIME>|"$EndTime"|" GoGo.m
-	sed -i "s|<TIME-INDEX>|"$TimeIndex"|" GoGo.m
+	sed -i "s|<TIME-INDEX>|"$timeindex"|" GoGo.m
 	sed -i "s|<FILENAME-POS>|\""$filename_pos"\"|" GoGo.m
 	sed -i "s|<FILENAME-NEG>|\""$filename_neg"\"|" GoGo.m
 	sed -i 's/_/\\_/g' GoGo.m

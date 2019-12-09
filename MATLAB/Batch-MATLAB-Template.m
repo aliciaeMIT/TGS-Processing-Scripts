@@ -11,6 +11,9 @@ posstr=<FILENAME-POS>;
 negstr=<FILENAME-NEG>;
 
 EndTime=<END-TIME>	% automatically extracted from first file to analyze
-TimeIndex=<TIME-INDEX>	% automatically derived from first file to analyze
 
-TGSPhaseAnalysis(posstr,negstr,grat,2,0,EndTime,TimeIndex,overlay1,overlay2);
+TimeIndex=<TIME-INDEX>  % Loop through these in a script to determine the best one
+
+TGSPhaseAnalysis(posstr,negstr,grat,2,0,EndTime,overlay1,overlay2,TimeIndex);
+
+% TGSPhaseAnalysis(posstr,negstr,grat,2,0,EndTime,overlay1,overlay2);
