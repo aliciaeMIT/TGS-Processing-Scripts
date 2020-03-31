@@ -65,7 +65,7 @@ do
 	
 	if (( $(echo "$usertimeindex == 0" | bc -l) ))
 	then
-		timeindex=54	%% Current default value based on Ge calibration
+		timeindex=186	%% Current default value based on Ge calibration
 	else
 		timeindex=$usertimeindex
 	fi
