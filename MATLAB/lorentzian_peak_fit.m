@@ -1,4 +1,4 @@
-function [peak,peak_err,fwhm,tau]=lorentzian_peak_fit(fft,two_mode,plotty)
+function [peak,peak_err,fwhm,tau,f0]=lorentzian_peak_fit(fft,two_mode,plotty)
 
 percent_peak_fit=1;
 
@@ -10,7 +10,7 @@ if nargin<3
     plotty=0;
 end
 
-st_point=2000; %set to cut off DC spike in fft, if necessary
+st_point=20; %set to cut off DC spike in fft, if necessary
 end_point=15000; %set to cut off DC spike in fft, if necessary
 
 fft(:,1)=fft(:,1)/10^9; %put everything in units of GHz so fit is not crazy
@@ -89,10 +89,11 @@ if two_mode
     tau=[tau tau2];
 end
 
+
 if plotty
     figure()
     axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',5)
-    plot(fft(:,1),fft(:,2),'k-','LineWidth',3,'DisplayName','Raw FFT Data');
+    plot(fft(:,1),fft(:,2),'k-','LineWidth',3)%'DisplayName','Raw FFT Data');
     hold on
     plot(fft(:,1),f0(fft(:,1)),'r--','LineWidth',3,'DisplayName','First SAW Frequency Fit');
     hold on
@@ -101,7 +102,7 @@ if plotty
         hold on
     end
     set(gcf,'Position',[0 0 800 500])
-    xlim([0 1.2])
+    xlim([0 1.0])
     set(gca,...
         'FontUnits','points',...
         'FontWeight','normal',...
@@ -116,7 +117,7 @@ if plotty
         'FontUnits','points',...
         'FontSize',24,...
         'FontName','Helvetica')
-    legend
+%     legend
     saveas(gcf,"TGS_FFT.png")
 end
 
