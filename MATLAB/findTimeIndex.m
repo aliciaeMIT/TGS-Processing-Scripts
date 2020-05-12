@@ -55,12 +55,14 @@ first = gradient(fixed_short(:,2)) ;   % derivative of fixed_short
 second_derv = gradient(first);         % second derivative of fixed_short
 [~,derv_index] = max(second_derv(1:max_time));
 minprom=5*max(second_derv(1:50));
-[~,pos_loc]=findpeaks(second_derv(1:max_time),'MinPeakProminence',minprom);
+[pos_val,pos_loc]=findpeaks(second_derv(1:max_time),'MinPeakProminence',minprom);
 
 %%%%%%%%% Make sure the peak it is using is the first after the rise of the
 %%%%%%%%% raw trace
-if pos_loc(1)<derv_index
-    derv_index=pos_loc(1);
+if length(pos_loc)>0
+    if pos_loc(1)<derv_index
+        derv_index=pos_loc(1);
+    end
 end
 
 

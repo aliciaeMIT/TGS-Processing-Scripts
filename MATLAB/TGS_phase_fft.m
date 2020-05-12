@@ -14,7 +14,7 @@ derivative=0;
 plotty=0;
 plotfft=0;
 saveout=0;
-combo=0;            % Calculates a linear combination of normal FFT and FFT from derv of 'flat'
+combo=1;            % Calculates a linear combination of normal FFT and FFT from derv of 'flat'
 rangefrac=0.5;      % The fraction of 'flat' that is used to calculate the FFT
 cut_tails=2000;     % Fraction of data removed from beginning and end of FFT spectra
 
