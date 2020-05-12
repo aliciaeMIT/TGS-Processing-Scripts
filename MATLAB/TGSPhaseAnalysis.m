@@ -384,9 +384,9 @@ else
             if bad_alpha && bad_beta
                 display(strcat('Bad fit for: ',pos_file,'~re: tau (likely)'))
             elseif bad_alpha && ~bad_beta
-                display(strcat('Bad fit for: ',pos_file,'~re: alpha'))
+                display(strcat('Bad fit for: ',pos_file,'~re: alpha (thermal diffusivity)'))
             elseif ~bad_alpha && bad_beta
-                display(strcat('Bad fit for: ',pos_file,'~re: beta'))
+                display(strcat('Bad fit for: ',pos_file,'~re: beta (ratio of reflectivity to displacement)'))
             end
 
             if plot_final
