@@ -57,30 +57,19 @@ do
 	then
 		temp=${filename_pos%%0um-*}
 		grating="$(echo $temp | rev | cut -c -3 | rev)"
-		echo Extracting grating from data...
+		# echo $temp
 	else
 		grating=$usergrating
-		echo Found user-specificing grating
 	fi
 	echo Grating = $grating
 	
-## Extract the end time from the first file to analyze. This will be used in automatically
-## choosing the time_index, unless the user overwrites it.
-
-	EndTime="$(tail -n 1 $filename_pos | cut -c 1-11)"
-	echo $EndTime
-
-## Get the specified timeindex from the user. If none is given, direct the MATLAB
-## script to automatically extract it from the dataset.
-
 	if (( $(echo "$usertimeindex == 0" | bc -l) ))
 	then
-		usertimeindex=-1
-		echo No UserTimeIndex given, specifying automatic find
+		timeindex=54	%% Current default value based on Ge calibration
 	else
-		echo timeindex has been set to $usertimeindex
+		timeindex=$usertimeindex
 	fi
-	timeindex=$usertimeindex
+	echo Time Index = $timeindex
 	
 ## Extract interesting bits of info to overlay on the final image
 
@@ -103,6 +92,8 @@ do
 #	Time="$(echo $Time | cut -c 16- | tr -d '\n\r')"
 	Time="$(echo $Time | sed 's/^.*Time//' | tr -d '\r\n\ ')"
 	echo $Time
+	EndTime="$(tail -n 1 $filename_pos | cut -c 1-11)"
+	echo $EndTime
 
 ## Grab the first line in the data file which has an "E-2". This is the first data point where the
 ## measured voltage is in the 10's of mV. Then grep return the line number, and take the first three
@@ -116,8 +107,8 @@ do
 ## Create a MATLAB .m file to process the two data files
 
 	sed 's/<GRATING>/'$grating'/'  Batch-MATLAB-Template.m >> GoGo.m
-	sed -i "s|<TIMESTAMP>|\"Date: "$Date",\ \ \ Time: "$Time",\ \ \ \\\lambda="$grating"\\\mu m\"|" GoGo.m
-	sed -i "s|<SAMPLESTAMP>|\"Study:\ "$StudyName",\ \ \ Sample:\ "$SampleName"\"|" GoGo.m
+	sed -i "s|<TIMESTAMP>|\"Date: "$Date", Time: "$Time", \\\lambda="$grating"\\\mu m\"|" GoGo.m
+	sed -i "s|<SAMPLESTAMP>|\"Study:\ "$StudyName"\ Sample:\ "$SampleName"\"|" GoGo.m
 	sed -i "s|<END-TIME>|"$EndTime"|" GoGo.m
 	sed -i "s|<TIME-INDEX>|"$timeindex"|" GoGo.m
 	sed -i "s|<FILENAME-POS>|\""$filename_pos"\"|" GoGo.m

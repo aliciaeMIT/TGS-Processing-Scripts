@@ -1,41 +1,79 @@
-function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau] = TGSPhaseAnalysis(pos_file,neg_file,grat,start_phase,two_mode,end_time,time_index,overlay1,overlay2)
+%   Function to process TGS signals, fitting the TGS response equation - eq.
+%   12 in Dennett et al. (2018) [https://doi.org/10.1063/1.5026429] - using
+%   the Levenberg-Marquardt nonlinear least squares method.
+%   Created by C.A. Dennett.
+%   Modified by B.R. Dacus & A.P.C. Wylie.
 
-%     Function to determine thermal diffusivity from phase grating TGS data
-%   Data is saved in two files, positive (with one heterodyne phsae) and
+
+function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau, tauErr, paramA, AErr, ParamBeta, BetaErr, paramB, BErr, paramTheta, thetaErr, paramC, CErr] = TGSPhaseAnalysis(pos_file,neg_file,grat,start_phase,two_mode,baselineBool,POSbaselineStr,NEGbaselineStr)
+%   Function to determine thermal diffusivity from phase grating TGS data
+%   Data is saved in two files, positive (with one heterodyne phase) and
 %       negative (with another), must provide both files
-%   pos_file: positive phase TGS data file
-%   neg_file: negative phae TGS data file
-%   grat: calibrated grating spacing in um
-%   start_phase: provide integer between 1 and 4 to pick the null-point start
-%               from which fit will begin
-%   two_mode: a boolean value, default value is 0 if only one acoustic mode
-%               is present in the measurement. If two are present, provide 1 for both
-%               frequencies and speeds to be output.
-%   end_time: a shortened fit end time if you do not want ot fit the whole profile.
-%               If argument not given, will be set to default for 200ns data collection window
-
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%   Extra parameter: time_index: Define where the actual fit starts.
-%   Make it negative if you want the script to find it. Specify it if not.
-%   Experimental, working on a physical way to define this.
-%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%   ------Inputs------
+%   pos_file:       positive phase TGS data file
+%   neg_file:       negative phase TGS data file
+%   grat:           calibrated grating spacing in um
+%   start_phase:    provide integer between 1 and 4 to pick the null-point start
+%                   from which fit will begin
+%   two_mode:       a boolean value, default value is 0 if only one acoustic mode
+%                   is present in the measurement. If two are present, provide 1 for both
+%                   frequencies and speeds to be output.
+%   baselineBool:   a boolean value telling the script if baseline subtraction for your 
+%                   data is desired. 1 for 'yes do baseline subtraction', 2 for 'don't'.
+%   POSbaselineStr: file for the positive baseline subtraction. Note that
+%                   this must always be supplied, even if no subtraction is
+%                   desired - supply a dummy file in this case.
+%   NEGbaselineStr: file for the negative baseline subtraction. Again a file must be supplied.
+%
+%   -----Outputs-----
+%   freq_final:     SAW frequency [Hz] from signal FFT
+%   freq_err:       error on SAW frequency [Hz] (1 σ)
+%   speed:          SAW speed [ms^-1]
+%   diffusivity:    thermal diffusivity [m^2s^-1]
+%   diffusivity_err:thermal diffusivity err [m^2s^-1] taken using 95%
+%                   confidence interval. The rest of the errors in the outputs use this
+%                   confidence interval-based method.
+%   tau:            acoustic damping parameter [s]
+%   tau_err:        acoustic damping parameter error [s]
+%   paramA:         diffracted response amplitude [Wm^-2]
+%   paramA:         diffracted response amplitude error [Wm^-2]
+%   paramBeta       ratio of diffraction contributions from thermoreflectance changes
+%                   to those of surface displacement [s^0.5].
+%   BetaErr:        error on above ratio [s^0.5].
+%   paramB:         signal sinusoid contribution amplitude [Wm^-2].
+%   BErr:           error on signal sinusoid contribution amplitude [Wm^-2].
+%   paramTheta      phase of signal sinusoin contribution [].
+%   thetaErr        error on phase of signal sinusoin contribution [].
+%   paramC          fitting constant [Wm^-2].
+%   CErr            error on fitting constant [Wm^-2].
 
 %%%%Write this to include a sine variation in the fit by default, but to
 %%%%start the fits from a fixed null point, not time, relative to
 %%%% the initial SAW maximum.
 
+%%%%Angus' bit, Spring 2022:
+%%%%Have added output variables representing each of the fitting params and their 95% confidence interval errors
+%%%%Search "Angus" to find the bits that have been changed.
+
 %Settings for various plotting and output options to be set by boolean arguments
 find_max=0;
 plotty=0;
-plot_trace=0;
+plot_trace=1;
+psd_out=1;
 plot_psd=1;
 plot_final=1;
-print_final_fit=0;
+print_final_fit=1;
 two_detectors=1;
 q=2*pi/(grat*10^(-6));
-tstep=5e-11; %Set by scope used for data collection
+tstep=50e-12; %Set by scope used for data collection
 no_pre_calc=0;
 amp_grat=0;
+steel=0;
+printFitsToFiles = 0;
+
+%FFT settings for TGS_phase_fft.m
+range_frac=0.9;      % The fraction of 'flat' that is used to calculate the FFT
 
 %if on, record the amplitude ratio of A/B in final fit at the end of tau
 %vector (so it is four elements instead of 3)
@@ -78,6 +116,7 @@ end
 %end, d for diffusivity b for beta. Diffusivity is most important
 percent_range_d=0.45;
 percent_range_b=2.25;
+% percent_range_b=10.0;
 if tau_final_fit && ~start_constant
     if start_walkoff
         percent_range_t=2.5;
@@ -104,10 +143,19 @@ else
 end
 
 %Generate filtered power spectrum using TGS_phase_fft() and find the peak frequency from that profile using lorentzian_peak()
-[fft]=TGS_phase_fft(pos_file,neg_file,grat,1);
-[freq_final,freq_error,peak_fwhm,tau_lorentz]=lorentzian_peak_fit(fft,two_mode,plot_psd);
+% [fft]=TGS_phase_fft(pos_file,neg_file,grat,psd_out,rangefrac);
+if steel
+    [freq_final,freq_error,flat]=find_freq_steel(pos_file,neg_file,grat);
+else
+    [fft]=TGS_phase_fft(pos_file,neg_file,grat,psd_out,range_frac,baselineBool,POSbaselineStr,NEGbaselineStr);
+    [freq_final,freq_error,tau_lorentz]=lorentzian_peak_fit(fft,two_mode,plot_psd);
+    tau(1)=tau_lorentz(1);
+end
+% freq_final=5.4249e+08;
+% [freq_final,freq_error,peak_fwhm,tau_lorentz,fit_out,SNR_fft]=lorentzian_peak_fit(fft,two_mode,plot_psd);
+% display(['FWHM: ',num2str(peak_fwhm)])
+% display(['freq_err: ',num2str(freq_error)])
 speed=freq_final*grat*10^(-6);
-tau(1)=tau_lorentz(1);
 
 walk_off=spot_size/(speed(1)*2); %this is the walk off time in sec
 tau(2)=walk_off;
@@ -117,37 +165,58 @@ peak_freq=freq_final(1);
 %read in data files for this procedure
 pos=dlmread(pos_file,'',hdr_len,0);
 neg=dlmread(neg_file,'',hdr_len,0);
+% neg=dlmread(neg_file,'',hdr_len+36,0);
+% % neg(:,1)=neg(:,1)-neg(1,1); %%%%% Comment when cables are same length
+if baselineBool
+    posbas=dlmread(POSbaselineStr,'',hdr_len,0);
+    negbas=dlmread(NEGbaselineStr,'',hdr_len,0);
+end
+
+% negbas(:,1)=negbas(:,1)-negbas(1,1); %%%%% Comment when cables are same length
 
 %sometimes written data is off by one time step at the end, chop that off if they do not match
 if length(pos(:,1))>length(neg(:,1))
     pos=pos(1:length(neg(:,1)),:);
-elseif length(neg(:,1))>length(neg(:,1))
+    if baselineBool
+        posbas=posbas(1:length(neg(:,1)),:);
+    end
+elseif length(neg(:,1))>length(pos(:,1))
     neg=neg(1:length(pos(:,1)),:);
+    if baselineBool
+        negbas=negbas(1:length(pos(:,1)),:);
+    end
+    
+end
+
+if baselineBool
+    pos(:,2)=pos(:,2)-posbas(:,2);
+    neg(:,2)=neg(:,2)-negbas(:,2);
 end
 
 %normalize each set of data to the zero level before the pump impulse
 pos(:,2)=pos(:,2)-mean(pos(1:50,2));
 neg(:,2)=neg(:,2)-mean(neg(1:50,2));
 
-%%%%%Time indexing block, important to keep track of%%%%%%%%
-%%%%%%%%%%%%%%%%%% now it's not!!! %%%%%%%%%%%%%%%%%%%%%%%%%
- if time_index<0
-    [time_index,end_time]=findTimeIndex(pos_file,neg_file);
-    display(['Time Index is: ',num2str(time_index)])
- end
 
-% time_index=186;
-% time_index=235;
+%%%%%Time indexing block%%%%%%%%
+
+[time_index,end_time]=findTimeIndex(pos_file,neg_file);
+display(['Time Index is: ',num2str(time_index)])
+display(['End Time is: ',num2str(end_time)])
+
+% end_time=5e-7;
+% time_index=150;
 
 time_naught=neg(time_index,1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-end_index=floor(end_time/tstep);
+end_index=floor(end_time/tstep)-36;
 
 %re-normalize data to end signal decayed state if grating decays entirely during collection window, if not, do not re-normalize
 if grat<8
     base_index=floor(length(pos(:,2))/5);
-    long_base=mean((pos(1:time_index,2)-neg(1:time_index,2)));
+    long_base=mean((pos(1:50,2)-neg(1:50,2)));
+%     long_base=mean((pos(1:time_index,2)-neg(1:time_index,2)));
 %     long_base=mean((pos(end-base_index:end,2)-neg(end-base_index:end,2)));
 else
     long_base=0;
@@ -175,17 +244,31 @@ if plot_trace
         'FontName','Helvetica')
     
     txt3 = {['Time Index = ',num2str(time_index)],['End Time = ',num2str(end_time)]};
-    text(neg(end/2-1000,1)*10^9,(max(pos(:,2)-neg(:,2)-long_base))*.75*10^3,txt3,'FontSize',24)
+    %text(neg(end/2-1000,1)*10^9,(max(pos(:,2)-neg(:,2)-long_base))*.75*10^3,txt3,'FontSize',24)%this line threw some weird error for the 2021_10_04 tungsten calibrations
     saveas(gcf,"TGS_Trace.png")
 end
 
 if start_phase==0
     diffusivity=0;
     diffusivity_err=0;
+    %Angus' additions begin
+    tauErr = 0;
+    paramA= 0;
+    AErr= 0;
+    ParamBeta= 0;
+    BetaErr= 0;
+    paramB= 0;
+    BErr= 0;
+    paramTheta= 0;
+    thetaErr= 0;
+    paramC= 0;
+    CErr= 0;
+    %Angus' additions end
 else
     
     if amp_grat==0
 
+%         fixed_short=[pos(time_index:end_index,1)-time_naught -neg(time_index:end_index,2)-long_base];
         fixed_short=[pos(time_index:end_index,1)-time_naught pos(time_index:end_index,2)-neg(time_index:end_index,2)-long_base];
         if derivative
             der_len=length(fixed_short(:,1))-1;
@@ -243,7 +326,7 @@ else
             error=confint(f0,0.95);
             %factor of 2 makes the 1 sigma confidence interval come out
             diffusivity_err=[diffusivity-error(1,2) error(2,2)-diffusivity]/2;
-
+            
             if plotty
                 figure()
                 plot(fixed_short(:,1),fixed_short(:,2),fixed_short(:,1),f0(fixed_short(:,1)))
@@ -275,6 +358,7 @@ else
                 error=confint(f1,0.95);
                 %factor of 2 makes the 1 sigma confidence interval come out
                 diffusivity_err=[diffusivity-error(1,2) error(2,2)-diffusivity]/2;
+               
 
                 if plotty
                     figure()
@@ -302,7 +386,7 @@ else
                     low_bound(2)=0;
                 end
             end
-
+            
             start_time2=start_time_master;
             start_index2=start_index_master;
 
@@ -310,7 +394,7 @@ else
                 if start_constant
                     low_t=5e-9;
                     up_t=7e-7;
-                    start_tau=1e-8;
+                    start_tau=1e-9;
                 elseif start_lorentz
                     low_t=tau(1)*(1-percent_range_t);
                     up_t=tau(1)*(1+percent_range_t);
@@ -329,9 +413,7 @@ else
                     end
                     start_tau=tau(2);
                 end
-
-    %            LB2=[0 low_bound(1) low_bound(2) 0 -2*pi low_t -5e-3];
-    %            UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 5e-3];
+                
                 LB2=[0 low_bound(1) low_bound(2) 0 -2*pi low_t -5e-3];
                 UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 5e-3];
                 ST2=[.05 diffusivity beta 0.05 0 start_tau 0];
@@ -353,7 +435,6 @@ else
                 OPS2=fitoptions('Method','NonLinearLeastSquares','Lower',LB2,'Upper',UB2,'Start',ST2);
                 TYPE2=fittype('A.*(erfc(q*sqrt(k*(x+start_time)))-beta*exp(-q^2*k*(x+start_time))./sqrt((x+start_time)))+B.*sin(2*pi*(peak_freq)*(x+start_time)+p)*exp(-(x+start_time)/t)+D','options',OPS2,'problem',{'q','start_time','peak_freq','t'},'coefficients',{'A','k','beta','B','p','D'});
                 [f2,gof]=fit(fixed_short(start_index2:end,1),fixed_short(start_index2:end,2),TYPE2,'problem',{q,start_time2,peak_freq,pp_tau});
-%                 [f2,gof]=fit(fixed_short((start_index2+time_index):end,1),fixed_short((start_index2+time_index):end,2),TYPE2,'problem',{q,start_time2,peak_freq,pp_tau});
             end
 %             display(['Start time: ', num2str(start_time2)])
 %             display(['Start index: ', num2str(start_index2)])
@@ -364,11 +445,30 @@ else
             end
 
             diffusivity=f2.k;
+            
+            %Angus' additions begin
+            paramA= f2.A;
+            ParamBeta= f2.beta;
+            paramB= f2.B;
+            paramTheta= f2.p;
+            paramC= f2.D;
+            %Angus' additions end
+            
+%           display(f2.beta)
 
             error=confint(f2,0.95);
             %factor of 2 makes the 1 sigma confidence interval come out
             diffusivity_err=(diffusivity-error(1,2))/2;
-
+            
+            %Angus' additions begin
+            tauErr = (f2.t - error(1,6))/2;
+            AErr= (f2.A - error(1,1))/2;
+            BetaErr= (f2.beta - error(1,3))/2;
+            BErr= (f2.B - error(1,4))/2;
+            thetaErr= (f2.p - error(1,5))/2;
+            CErr= (f2.D - error(1,7))/2;
+            %Angus' additions end
+            
             %final fit (on constant provided) version of tau
             tau(3)=f2.t;
 
@@ -384,9 +484,9 @@ else
             if bad_alpha && bad_beta
                 display(strcat('Bad fit for: ',pos_file,'~re: tau (likely)'))
             elseif bad_alpha && ~bad_beta
-                display(strcat('Bad fit for: ',pos_file,'~re: alpha (thermal diffusivity)'))
+                display(strcat('Bad fit for: ',pos_file,'~re: alpha'))
             elseif ~bad_alpha && bad_beta
-                display(strcat('Bad fit for: ',pos_file,'~re: beta (ratio of reflectivity to displacement)'))
+                display(strcat('Bad fit for: ',pos_file,'~re: beta'))
             end
 
             if plot_final
@@ -401,26 +501,53 @@ else
                     f_remove_sine=cfit(TYPE2,f2.A,f2.k,f2.beta,f2.B,f2.p,f2.D,q,start_time2,peak_freq,0);
                 end
                 %%%%%%%%%%%%%%%
+     
                 figure()
                 plot((neg(:,1)-time_naught)*10^9,(pos(:,2)-neg(:,2)-long_base)*10^3/amp_factor,'k-','LineWidth',5,'DisplayName','Raw TGS Trace')
+                %disp((neg(:,1)-time_naught)*10^9);              
+                %disp((pos(:,2)-neg(:,2)-long_base)*10^3/amp_factor);
+%                 plot((neg(:,1)-time_naught)*10^9,(0-neg(:,2)-long_base)*10^3/amp_factor,'k-','LineWidth',5,'DisplayName','Raw TGS Trace')
                 hold on
-                %plot vertical line at start time
+%               %%%%%%plot vertical line at start time
                 plot([fixed_short(start_index2,1) fixed_short(start_index2,1)]*10^9,ylim,'g--','LineWidth',5,'DisplayName','Start Index')
                 hold on
                 plot([neg(time_index,1)-time_naught neg(time_index,1)-time_naught]*10^9,ylim,'c--','LineWidth',5,'DisplayName','Time Index')
                 hold on
                 plot(fixed_short(start_index2:end,1)*10^9,(f2(fixed_short(start_index2:end,1)))*10^3/amp_factor,'r--','LineWidth',5,'DisplayName','Full Functional Fit')
+                %disp(fixed_short(start_index2:end,1)*10^9);
+                %disp(f2(fixed_short(start_index2:end,1)));
                 hold on
                 plot(fixed_short(start_index2:end,1)*10^9,(f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor,'-','Color',[0 0 0.75],'LineWidth',5,'DisplayName','Thermal Fit')
+                %disp((f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor);
+                
+                if printFitsToFiles
+                    printFile1 = 'DataOfRaw.txt';
+                    fid1 = fopen( printFile1, 'w' );
+                    fprintf(fid1, 'time[ns] Raw_signal[mV]\n');
+                    for i=1:length(neg(:,1))
+                        fprintf(fid1, '%6f %6f\n',(neg(i,1)-time_naught)*10^9, (pos(i,2)-neg(i,2)-long_base)*10^3/amp_factor);
+                    end
+                    fclose(fid1);
+                    
+                    %this second print only goes part of the way through the file and then throws an error but it will do!
+                    printFile2 = 'DataOfFits.txt';
+                    fid2 = fopen( printFile2, 'w' );
+                    thermalFunc = (f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor;
+                    fprintf(fid2, 'fit_time[ns] Functional_fit[mV] Thermal_fit[mV]\n');
+                    for i=start_index2:length(fixed_short(:,1))
+                        fprintf(fid2, '%6f %6f %6f\n', fixed_short(i,1)*10^9, (f2(fixed_short(i,1)))*10^3/amp_factor, thermalFunc(i+1-start_index2,1));
+                    end
+                    fclose(fid2);
+                end
+                
                 hold on
                 xlim([-5 end_time*10^9])
 %                 xlim([-5 50])
 %                 ylim([10 30])
                 set(gcf,'Position',[0 0 1920 1080])
-		if nargin>7	%% Overlays come last, only place if specified. This stops throwing errors when no grapn overlays are given.
-	             annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
-	             annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay1,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
-		end
+%             annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+%             annotation('textbox',[0.02 0.01 0.5 0.03],'String',strcat('Time Index = ',num2str(time_index)),'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+%             annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay1,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
                 hold on
                 set(gca,...
                     'FontUnits','points',...
@@ -436,13 +563,14 @@ else
                     'FontUnits','points',...
                     'FontSize',40,...
                     'FontName','Helvetica')
-            legend('Location','best')
+            legend('Location','southeast')
 
     % Display the already-made FFT as an inset image
-
-            axes('pos',[.48 .48 .5 .5])
-            imshow('TGS_FFT.png')
-            saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
+            if ~steel
+                axes('pos',[.48 .48 .5 .5])
+                imshow('TGS_FFT.png')
+                saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
+            end
             end
 
         end
@@ -476,10 +604,9 @@ else
             xline(fixed_short(time_index,1)*10^9,'-b','LineWidth',5,'DisplayName','time index');
             xlim([-5 end_time*10^9])
             set(gcf,'Position',[0 0 1920 1080])
-	    if nargin>7     %% Overlays come last, only place if specified. This stops throwing errors when no grapn overlays are given.
-                annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
-                annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay1,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
-	    end
+%           annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+            annotation('textbox',[0.02 0.01 0.5 0.03],'String',strcar('Time Index = ',num2str(time_index)),'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+            %annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
             hold on
             set(gca,...
                 'FontUnits','points',...
@@ -496,10 +623,12 @@ else
                 'FontSize',40,...
                 'FontName','Helvetica')
             legend('Location','northeast')
+            
+            saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
         end
         
-        diffusivity=0;
-        diffusivity_err=0;
+%         diffusivity=0;
+%         diffusivity_err=0;
         
         if print_final_fit
                 display(famp)
@@ -507,22 +636,24 @@ else
     end
 end
 
- fileID = fopen('Analysis/Compiled-Analysis.csv','a');
- fprintf(fileID, '%s',pos_file);
+
+% posx=flat(:,1);
+% posy=flat(:,2);
+%%
+% fileID = fopen('Analysis/Compiled-Analysis.csv','a');
+% fprintf(fileID, '%s',pos_file);
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%
 % %
 % % Uncomment this to include the time_index for easier looping/testing purposes
 % %
-
- fprintf(fileID, ',%E', time_index);
-
+% fprintf(fileID, ',%E', time_index);
 % %
 % %%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
- fprintf(fileID, ',%E', freq_final);
- fprintf(fileID, ',%E', freq_error);
- fprintf(fileID, ',%E', diffusivity);
- fprintf(fileID, ',%E', diffusivity_err);
- fprintf(fileID, ',%E,%E,%E\n', tau);
- fclose(fileID);
+% fprintf(fileID, ',%E', freq_final);
+% fprintf(fileID, ',%E', freq_error);
+% fprintf(fileID, ',%E', diffusivity);
+% fprintf(fileID, ',%E', diffusivity_err);
+% fprintf(fileID, ',%E,%E,%E\n', tau);
+% fclose(fileID);

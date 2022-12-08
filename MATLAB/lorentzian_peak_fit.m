@@ -1,4 +1,8 @@
-function [peak,peak_err,fwhm,tau,f0]=lorentzian_peak_fit(fft,two_mode,plotty)
+function [peak,peak_err,fwhm,tau,f0,SNR_fft]=lorentzian_peak_fit(fft,two_mode,plotty)
+% function [peak,peak_err,fwhm,tau,f0,SNR_fft]=lorentzian_peak_fit(fft,two_mode,plotty,pos_file,DPA)
+
+freq_lowB=0.1;
+freq_hiB=0.9;
 
 percent_peak_fit=1;
 
@@ -10,8 +14,8 @@ if nargin<3
     plotty=0;
 end
 
-st_point=20; %set to cut off DC spike in fft, if necessary
-end_point=15000; %set to cut off DC spike in fft, if necessary
+st_point=1; %set to cut off DC spike in fft, if necessary
+end_point=12000; %set to cut off DC spike in fft, if necessary
 
 fft(:,1)=fft(:,1)/10^9; %put everything in units of GHz so fit is not crazy
 fft(1:st_point,2)=0;
@@ -20,6 +24,11 @@ fft(end_point:end,2)=0;
 
 [max_val,peak_ind]=max(fft(st_point:end,2));
 peak_loc=fft(peak_ind,1);
+
+if two_mode
+    st_two_mode=round(0.1*peak_ind);
+    end_two_mode=round(0.75*peak_ind);
+end
 
 %normalize the fft so the scale isn't absurd
 fft(:,2)=fft(:,2)/max_val;
@@ -51,15 +60,19 @@ else
     pos_ind_final=length(fft(:,1));
 end
 
-ST=[1e-4 peak_loc .01 0];
-LB=[0 0 0.001 0];
-UB=[1 1.2 0.1 1];
+% ST=[1e-4 peak_loc .01 0];
+ST=[1e-4 0.53 .01 0];
+% LB=[0 0.0 0.001 0];
+LB=[0 freq_lowB 0.001 0];
+% UB=[1 1.2 0.1 1];
+UB=[1 freq_hiB 0.05 1];
 
 OPS=fitoptions('Method','NonLinearLeastSquares','Lower',LB,'Upper',UB,'Start',ST);
 TYPE=fittype('(A./((x-x0)^2+(W)^2))+C','options',OPS,'coefficients',{'A','x0','W','C'});
 
 [f0,~]=fit(fft(neg_ind_final:pos_ind_final,1),fft(neg_ind_final:pos_ind_final,2),TYPE);
 error=confint(f0,0.95); %this is the 2 sigma error
+% display(f0)
 
 peak=f0.x0*10^9; %so answers is in Hz
 peak_err=((f0.x0-error(1,2))*10^9)/2; % so answer 1 sigma in Hz
@@ -68,7 +81,8 @@ tau=1/(pi*fwhm); %so answer is in sec
 
 if two_mode
     new_fft_amp=fft(:,2)-f0(fft(:,1));
-    [~,peak_ind_2]=max(new_fft_amp(st_point:end));
+%     [~,peak_ind_2]=max(new_fft_amp(st_point:end));
+    [~,peak_ind_2]=max(new_fft_amp(st_two_mode:end_two_mode));
     peak_loc_2=fft(peak_ind_2,1);
     
     ST1=[1e-4 peak_loc_2 .01 0];
@@ -89,20 +103,38 @@ if two_mode
     tau=[tau tau2];
 end
 
+fft_noise = [fft(:,1) fft(:,2)-f0(fft(:,1))];
+SNR_fft = snr(fft(:,2),fft_noise(:,2));
+
 
 if plotty
     figure()
-    axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',5)
+%     axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',5)
     plot(fft(:,1),fft(:,2),'k-','LineWidth',3)%'DisplayName','Raw FFT Data');
     hold on
+%     txt = [num2str(DPA)];
+%     text(0.1,0.8,txt,'HorizontalAlignment','left','FontSize',28)
+    xline(LB(2),'b-','LineWidth',3,'DisplayName','Lower bound');
+    hold on
+    xline(UB(2),'b-','LineWidth',3,'DisplayName','Upper bound');
+    hold on
+%     plot(fft(:,1),new_fft_amp,'k-','LineWidth',3)%'DisplayName','Raw FFT Data');
+    hold on
+%     plot(fft_noise(:,1),fft_noise(:,2),'c','LineWidth',3,'DisplayName','Noise');
+%     hold on
     plot(fft(:,1),f0(fft(:,1)),'r--','LineWidth',3,'DisplayName','First SAW Frequency Fit');
     hold on
     if two_mode
         plot(fft(:,1),f1(fft(:,1)),'b--','LineWidth',3,'DisplayName','Second SAW Frequency Fit');
         hold on
+        plot([fft(st_two_mode,1) fft(st_two_mode,1)],[-0.005 max_val+0.005],'g--','LineWidth',3)
+        hold on
+        plot([fft(end_two_mode,1) fft(end_two_mode,1)],[-0.005 max_val+0.005],'g--','LineWidth',3)
+        hold on
     end
     set(gcf,'Position',[0 0 800 500])
     xlim([0 1.0])
+    ylim([0 1.0])
     set(gca,...
         'FontUnits','points',...
         'FontWeight','normal',...
@@ -117,8 +149,9 @@ if plotty
         'FontUnits','points',...
         'FontSize',24,...
         'FontName','Helvetica')
-%     legend
+%     legend('Location','northwest')
     saveas(gcf,"TGS_FFT.png")
+%     saveas(gcf,strcat(pos_file,"_TGS_FFT.png"))
 end
 
 end

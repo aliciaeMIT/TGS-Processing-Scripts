@@ -37,14 +37,14 @@ fixed_short=[pos(:,1) pos(:,2)-neg(:,2)];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Methods for finding time_index %%%%%%%%%%%%%%%%
 
-%%%%%%%%% Find Time Index from above mean(floor) + 10*std(floor)
-flat_index=0;
-hzcond=0;
-toohigh=mean(fixed_short(1:100,2))+10*std(fixed_short(1:100,2));
-while hzcond < toohigh
-    flat_index=flat_index+1;
-    hzcond=fixed_short(flat_index,2);
-end
+% %%%%%%%%% Find Time Index from above mean(floor) + 10*std(floor)
+% flat_index=0;
+% hzcond=0;
+% toohigh=mean(fixed_short(1:100,2))+10*std(fixed_short(1:100,2));
+% while hzcond < toohigh
+%     flat_index=flat_index+1;
+%     hzcond=fixed_short(flat_index,2);
+% end
 
 %%%%%%%%% Find Time Index from Trace MAX
 [max_trace,max_time]=max(fixed_short(1:600,2));
@@ -82,6 +82,7 @@ else
     derv_index = derv_index-off_50ns;
 end
 
+% derv_index = derv_index-off_50ns; %%%% comment out for 20ns timebase
 time_index = derv_index;
 
 

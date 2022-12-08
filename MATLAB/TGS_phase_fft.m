@@ -1,4 +1,4 @@
-function [fft] = TGS_phase_fft(pos_file,neg_file,grat,psd_out)
+function [fft] = TGS_phase_fft(pos_file,neg_file,grat,psd_out,rangefrac,baselineBool,POSbaselineStr,NEGbaselineStr)
 %   For this use only, generate filtered fft for input data
 %   pos_file: positive phase data pos_file
 %   neg_file: negative phase data neg_file
@@ -10,21 +10,51 @@ if nargin<4
 end
 
 %Boolean options for plotting and processing
-derivative=0;
+derivative=1;
+copy=0;
 plotty=0;
 plotfft=0;
 saveout=0;
-combo=1;            % Calculates a linear combination of normal FFT and FFT from derv of 'flat'
-rangefrac=0.5;      % The fraction of 'flat' that is used to calculate the FFT
-cut_tails=2000;     % Fraction of data removed from beginning and end of FFT spectra
+combo=0;            % Calculates a linear combination of normal FFT and FFT from derv of 'flat'
+cut_tails=1000;     % Fraction of data removed from beginning and end of FFT spectra %Angus changed this from 3000 to 1000
 
 hdr_len=16;
 
+if nargin<5
+    rangefrac=0.75;
+end
+
+%read in data files for this procedure
 pos=dlmread(pos_file,'',hdr_len,0);
 neg=dlmread(neg_file,'',hdr_len,0);
-
+% neg=dlmread(neg_file,'',hdr_len+36,0);
+% neg(:,1)=neg(:,1)-neg(1,1); %%%%% Comment when cables are same length
+if baselineBool
+    posbas=dlmread(POSbaselineStr,'',hdr_len,0);
+    negbas=dlmread(NEGbaselineStr,'',hdr_len,0);
+    
+    % negbas(:,1)=negbas(:,1)-negbas(1,1); %%%%% Comment when cables are same length
+    %
+    % %%%%%%%%%%% UNCOMMENT FOR F'd UP BASELINE
+    pos(:,2)=pos(:,2)-posbas(:,2);
+    neg(:,2)=neg(:,2)-negbas(:,2);
+end
+%normalize each set of data to the zero level before the pump impulse
 pos(:,2)=pos(:,2)-mean(pos(1:50,2));
 neg(:,2)=neg(:,2)-mean(neg(1:50,2));
+
+% %%%%%%%%% Plot to see the offset when there is a delay between detectors
+% figure()
+% plot(pos(1:1500,1),pos(1:1500,2))
+% hold on
+% plot(neg(1:1500,1),neg(1:1500,2))
+% [x1,y1]=max(pos(:,2));
+% [x2,y2]=min(neg(:,2));
+% display(y1)
+% display(y2)
+
+% %%%%%% Take this out later / if positive signal sucks
+% pos(:,2)=0;
 
 [~,time_index]=max(neg(1:1000,2));
 time_naught=neg(time_index,1);
@@ -39,8 +69,10 @@ end
 
 fixed_short=[pos(:,1) pos(:,2)-neg(:,2)];
 
+% Change back to fix_index
 [~,fix_index]=max(fixed_short(:,2));
-fixed_short=fixed_short(fix_index:end,:);
+% fixed_short=fixed_short(fix_index:end,:);
+fixed_short=fixed_short(100:end,:);
 
 if saveout
     dlmwrite('dat_temp.txt',fixed_short);
@@ -84,11 +116,33 @@ flat=zeros(newlength,2);
 flat(:,1)=flat1(1:newlength,1);
 flat(:,2)=flat1(1:newlength,2)/max(flat1(1:newlength,2));
 
+if copy
+    flat2=zeros(newlength*2-1,2);
+    for i=1:length(flat(:,1))
+        flat2(i,1)=flat(i,1);
+        flat2(i,2)=flat(i,2);
+    end
+    for i=length(flat(:,1))+2:length(flat2(:,1))+1
+        flat2(i-1,2)=flat((2*length(flat(:,1))+1)-i,2);
+        flat2(i-1,1)=flat(i-length(flat(:,1)),1)+flat(length(flat(:,1)),1);
+    end
+    clear flat
+    flat=flat2;
+end
+
+xx=0:1e-11:6e-9;
+yy=spline(flat(:,1),flat(:,2),xx);
+
 if plotty
     figure()
-    plot(flat(:,1),flat(:,2),'b-')
+    plot(flat(:,1),flat(:,2),'o',xx,yy,'x')    
     title('this is fixed short minus the erfc(..) fit and shortened');
 end
+
+% clear flat
+% flat=zeros(length(xx),2);
+% flat(:,1) = xx;
+% flat(:,2) = yy;
 
 % Time step info necessary for differentiation and flat padding
 tstep=flat(end,1)-flat(end-1,1);
@@ -130,7 +184,7 @@ nfft=length(flat_pad(:,2));
 %periodogram.
 [psd,freq]=periodogram(flat_pad(:,2),rectwin(nfft),nfft,fs); %periodogram method
 
-psdlenadj=ceil(numel(psd)*(1/10))-cut_tails;
+psdlenadj=ceil(numel(psd)*(1/5))-6*cut_tails;
 psd(1:cut_tails)=0;
 psd(psdlenadj:end)=0;
 psd=psd/(max(psd));
@@ -140,7 +194,7 @@ if combo
     nfftd=length(dflat_pad(:,2));
     [psd_d,freq_d]=periodogram(dflat_pad(:,2),rectwin(nfftd),nfftd,fs); %periodogram method
     
-    psdlenadj=ceil(numel(psd_d)*(1/10))-cut_tails;
+    psdlenadj=ceil(numel(psd_d)*(1/5))-cut_tails;
     psd_d(1:cut_tails)=0;
     psd_d(psdlenadj:end)=0;
     psd_d=psd_d/(max(psd_d));
@@ -155,7 +209,7 @@ else
     amp=sqrt(psd(1:end));
 end
 
-fft=[freq(1:end-1) amp(1:length(freq(1:end-1)))];
+fft=[freq(1:end-1) sgolayfilt(amp(1:length(freq(1:end-1))),5,201)];
 
 if saveout
     dlmwrite('dat_spec.txt',out);
@@ -164,7 +218,7 @@ end
 if plotfft
     figure()
     axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',5)
-    plot(freq(1:end-1),amp(1:length(freq(1:end-1)))/max(amp),'k','LineWidth',2);
+    plot(freq(1:end-1),sgolayfilt(amp(1:length(freq(1:end-1)))/max(amp),5,201),'k','LineWidth',2);
     hold on
     xlim([0 1.0e9]);
     set(gca,...
@@ -177,11 +231,16 @@ if plotfft
         'FontUnits','points',...
         'FontSize',24,...
         'FontName','Helvetica')
-    xlabel({'Frequency [GHz]'},...
+    xlabel({'Frequency [Hz]'},...
         'FontUnits','points',...
         'FontSize',24,...
         'FontName','Helvetica')
 end
+
+% figure()
+% invFFT=ifft(amp(1:length(freq(1:end-1)))/max(amp));
+% plot(real(invFFT))
+
 
 
 end
