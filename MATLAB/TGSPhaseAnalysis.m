@@ -66,7 +66,12 @@ plot_final=1;
 print_final_fit=1;
 two_detectors=1;
 q=2*pi/(grat*10^(-6));
-tstep=50e-12; %Set by scope used for data collection
+%updated tstep parsing to better handle variable sampling rates that can happen if the scope is left in 4-channel mode rather than 2-channel mode. 
+%in general, this should never happen, as 20 gigasamples per second is how the scope should be configured, but accidents happen and this renders
+%those data as salvageable.
+%timestep found by parsing first few time data points
+pos_aux = readvars(pos_file,"NumHeaderLines",16);
+tstep = pos_aux(2) - pos_aux(1);
 no_pre_calc=0;
 amp_grat=0;
 steel=0;
