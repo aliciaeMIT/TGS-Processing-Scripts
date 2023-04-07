@@ -2,8 +2,7 @@
 %   12 in Dennett et al. (2018) [https://doi.org/10.1063/1.5026429] - using
 %   the Levenberg-Marquardt nonlinear least squares method.
 %   Created by C.A. Dennett.
-%   Modified by B.R. Dacus & A.P.C. Wylie.
-
+%   Modified by B.R. Dacus, A.P.C. Wylie & K. Zoubkova.
 
 function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau, tauErr, paramA, AErr, ParamBeta, BetaErr, paramB, BErr, paramTheta, thetaErr, paramC, CErr] = TGSPhaseAnalysis(pos_file,neg_file,grat,start_phase,two_mode,baselineBool,POSbaselineStr,NEGbaselineStr)
 %   Function to determine thermal diffusivity from phase grating TGS data
@@ -111,6 +110,37 @@ if fixed_tau==1 && fixed_lorentz==0 && fixed_walkoff==0
     fixed_walkoff=1;
 end
 %%%%%%%%%%%%%%%%%%%
+
+%Kristyna addition to handle baseline arguments
+if nargin < 6
+        baselineBool = 0;
+        POSbaselineStr = NaN;
+        NEGbaselineStr = NaN;
+    end
+       
+    if nargin == 6 && baselineBool == 0
+        POSbaselineStr = NaN;
+        NEGbaselineStr = NaN;
+    elseif nargin == 6 && baselineBool == 1 % can be either error or warning and no subtraction
+        error('For baselineBool = 1 it is necessary to provide positive and negative baseline signals.') 
+    %     warning('baselineBool = 1, but positive and negative baseline signals not provided -> continuing without baseline subtraction')
+    %     baselineBool = 0
+    %     POSbaselineStr = NaN;
+    %     NEGbaselineStr = NaN;
+    end
+    
+    if nargin == 7 && baselineBool == 0
+        warning('baselineBool = 0 -> continuing without baseline subtraction')
+        POSbaselineStr = NaN;
+        NEGbaselineStr = NaN;
+    elseif nargin == 7 && baselineBool == 1
+        error('For baselineBool = 1 it is necessary to provide BOTH positive and negative baseline signals.')
+    end
+    
+    if baselineBool == 1 && (isempty(POSbaselineStr) || isempty(NEGbaselineStr)) 
+        error('baselineBool = 1 but positive or negative baseline signal not provided')
+    end
+%End Kristyna addition to handle baseline arguments
 
 %How far from guessed values for diffusivity and beta do you vary in the
 %end, d for diffusivity b for beta. Diffusivity is most important
