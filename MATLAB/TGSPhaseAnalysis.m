@@ -4,6 +4,7 @@
 %   Created by C.A. Dennett.
 %   Modified by B.R. Dacus, A.P.C. Wylie & K. Zoubkova.
 
+
 function [freq_final,freq_error,speed,diffusivity,diffusivity_err,tau, tauErr, paramA, AErr, ParamBeta, BetaErr, paramB, BErr, paramTheta, thetaErr, paramC, CErr] = TGSPhaseAnalysis(pos_file,neg_file,grat,start_phase,two_mode,baselineBool,POSbaselineStr,NEGbaselineStr)
 %   Function to determine thermal diffusivity from phase grating TGS data
 %   Data is saved in two files, positive (with one heterodyne phase) and
@@ -353,9 +354,9 @@ else
             [f0,gof]=fit(fixed_short(:,1),fixed_short(:,2),TYPE,'problem',{q,time_max});
 
             diffusivity=f0.k;
-            error=confint(f0,0.95);
+            con_int_error=confint(f0,0.95);
             %factor of 2 makes the 1 sigma confidence interval come out
-            diffusivity_err=[diffusivity-error(1,2) error(2,2)-diffusivity]/2;
+            diffusivity_err=[diffusivity-con_int_error(1,2) con_int_error(2,2)-diffusivity]/2;
             
             if plotty
                 figure()
@@ -385,9 +386,9 @@ else
                 [f1,gof]=fit(fixed_short(start_index:end,1),fixed_short(start_index:end,2),TYPE1,'problem',{q,beta,start_time});
 
                 diffusivity=f1.k;
-                error=confint(f1,0.95);
+                con_int_error=confint(f1,0.95);
                 %factor of 2 makes the 1 sigma confidence interval come out
-                diffusivity_err=[diffusivity-error(1,2) error(2,2)-diffusivity]/2;
+                diffusivity_err=[diffusivity-con_int_error(1,2) con_int_error(2,2)-diffusivity]/2;
                
 
                 if plotty
@@ -486,17 +487,17 @@ else
             
 %           display(f2.beta)
 
-            error=confint(f2,0.95);
+            con_int_error=confint(f2,0.95);
             %factor of 2 makes the 1 sigma confidence interval come out
-            diffusivity_err=(diffusivity-error(1,2))/2;
+            diffusivity_err=(diffusivity-con_int_error(1,2))/2;
             
             %Angus' additions begin
-            tauErr = (f2.t - error(1,6))/2;
-            AErr= (f2.A - error(1,1))/2;
-            BetaErr= (f2.beta - error(1,3))/2;
-            BErr= (f2.B - error(1,4))/2;
-            thetaErr= (f2.p - error(1,5))/2;
-            CErr= (f2.D - error(1,7))/2;
+            tauErr = (f2.t - con_int_error(1,6))/2;
+            AErr= (f2.A - con_int_error(1,1))/2;
+            BetaErr= (f2.beta - con_int_error(1,3))/2;
+            BErr= (f2.B - con_int_error(1,4))/2;
+            thetaErr= (f2.p - con_int_error(1,5))/2;
+            CErr= (f2.D - con_int_error(1,7))/2;
             %Angus' additions end
             
             %final fit (on constant provided) version of tau
@@ -510,7 +511,7 @@ else
             %first checks that diffusivity has not pegged to fit bounds, second checks that beta
             %has not pegged. If either do, it is a bad fit
             bad_alpha=isnan(diffusivity_err(1));
-            bad_beta=isnan(error(1,3));
+            bad_beta=isnan(con_int_error(1,3));
             if bad_alpha && bad_beta
                 display(strcat('Bad fit for: ',pos_file,'~re: tau (likely)'))
             elseif bad_alpha && ~bad_beta
@@ -687,3 +688,4 @@ end
 % fprintf(fileID, ',%E', diffusivity_err);
 % fprintf(fileID, ',%E,%E,%E\n', tau);
 % fclose(fileID);
+
