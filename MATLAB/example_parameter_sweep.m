@@ -11,7 +11,7 @@ cd(dir)
 str_base='IronIrradiated_Fe3plus-2022-01-04-06.40um-unirradiated_';  %ADJUST
 %Change filename modifying number here
 spots=5:20; %ADJUST
-%Baseline handling - you always have to supply some form of baseline anyway for this to work, even if it is not used!
+%Baseline handling if no baseline arguments are provided, the code still works - it just doesn't do any baseline correction
 baselineBool = 1; % 1 for "yes do baseline subtraction", 0 for "no don't do that" 
 POSbaselineStr = pname + string('\IronIrradiated_Fe3plus-2022-01-04-06.40um-baseline-POS-1.txt'); %ADJUST
 NEGbaselineStr = pname + string('\IronIrradiated_Fe3plus-2022-01-04-06.40um-baseline-NEG-1.txt'); %ADJUST
