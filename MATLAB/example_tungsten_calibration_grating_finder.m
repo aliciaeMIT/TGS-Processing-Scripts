@@ -9,7 +9,7 @@ grat=3.7; % Initial grating spacing guess. Can be (nominally, MIT) 3.7, 5.8, 6.4
 
 posstr='Tungsten_Calibration-2022-05-19-06.40um-spot1-POS-1.txt';
 negstr='Tungsten_Calibration-2022-05-19-06.40um-spot1-NEG-1.txt';
-%Baseline handling - you always have to supply some form of baseline anyway for this to work, even if it is not used!
+%Baseline handling if no baseline arguments are provided, the code still works - it just doesn't do any baseline correction
 baselineBool = 0; % 1 for "yes do baseline subtraction", 0 for "no don't do that" 
 POSbaselineStr = pname + string('\Tungsten_Calibration-2022-05-19-03.70um-baseline') + string('-POS-1.txt'); %ADJUST
 NEGbaselineStr = pname + string('\Tungsten_Calibration-2022-05-19-03.70um-baseline') + string('-NEG-1.txt'); %ADJUST
