@@ -35,7 +35,7 @@ CErr_cal = 0;
 % Calibrated grating spacing
 pos_str_cal=strcat(calibration_filename_base,'-POS-1.txt');
 neg_str_cal=strcat(calibration_filename_base,'-NEG-1.txt');
-[freq_cal,freq_err_cal,speed_cal,diff_cal,diff_err_cal,tau_cal(:,1),tauErr_cal,A_cal,AErr_cal,beta_cal,betaErr_cal,B_cal,BErr_cal,theta_cal,thetaErr_cal,C_cal,CErr_cal]=TGSPhaseAnalysis(pos_str_cal,neg_str_cal,initial_grating_guess,2,0,'overlay1','overlay2', 0, POSbaselineStr, NEGbaselineStr);
+[freq_cal,freq_err_cal,speed_cal,diff_cal,diff_err_cal,tau_cal(:,1),tauErr_cal,A_cal,AErr_cal,beta_cal,betaErr_cal,B_cal,BErr_cal,theta_cal,thetaErr_cal,C_cal,CErr_cal]=TGSPhaseAnalysis(pos_str_cal,neg_str_cal,initial_grating_guess,2,0,0, POSbaselineStr, NEGbaselineStr);
 grat=1E6*2665.9/freq_cal; %in um, speed of sound in tungsten is 2665.9 m/s
 disp(['calculated grating size: ',num2str(grat,8),' um']);
 
