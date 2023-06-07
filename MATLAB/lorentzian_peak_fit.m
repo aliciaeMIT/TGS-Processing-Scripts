@@ -19,7 +19,7 @@ end_point=12000; %set to cut off DC spike in fft, if necessary
 
 fft(:,1)=fft(:,1)/10^9; %put everything in units of GHz so fit is not crazy
 fft(1:st_point,2)=0;
-fft(end_point:end,2)=0;
+%fft(end_point:end,2)=0; %This line of legacy code deletes half the data from the fit. Why? We do not know. But it is here if you want it back. 
 
 
 [max_val,peak_ind]=max(fft(st_point:end,2));
