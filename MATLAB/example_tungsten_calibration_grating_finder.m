@@ -5,8 +5,8 @@ dir=cd(pname);
 %%%%%%%%%%%%%%%%%%%
 close all;
 
-grat=3.7; % Initial grating spacing guess. Can be (nominally, MIT) 3.7, 5.8, 6.4, 7.0, 7.6, 9.4
-
+grat=3.7; % Initial grating spacing guess. Can be (nominally, MIT) 1.6, 1.9, 2.2, 2.5, 5.8, 6.4, 7.0, 7.6, 8.2, 8.8, 9.4
+                                                                 % 2.8, 3.1, 3.4, 3.7, 4.0, 4.2, 4.4, 4.6, 4.9, 5.2, 5.5 (layout of phase mask B)
 posstr='Tungsten_Calibration-2022-05-19-06.40um-spot1-POS-1.txt';
 negstr='Tungsten_Calibration-2022-05-19-06.40um-spot1-NEG-1.txt';
 %Baseline handling if no baseline arguments are provided, the code still works - it just doesn't do any baseline correction
