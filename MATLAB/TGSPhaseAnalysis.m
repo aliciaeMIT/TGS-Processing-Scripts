@@ -538,72 +538,63 @@ else
                 end
                 %%%%%%%%%%%%%%%
      
+                %This is where the final fit composite figure is made
+
                 figure()
-                plot((neg(:,1)-time_naught)*10^9,(pos(:,2)-neg(:,2)-long_base)*10^3/amp_factor,'k-','LineWidth',5,'DisplayName','Raw TGS Trace')
-                %disp((neg(:,1)-time_naught)*10^9);              
-                %disp((pos(:,2)-neg(:,2)-long_base)*10^3/amp_factor);
-%                 plot((neg(:,1)-time_naught)*10^9,(0-neg(:,2)-long_base)*10^3/amp_factor,'k-','LineWidth',5,'DisplayName','Raw TGS Trace')
+                plot((neg(:,1)-time_naught)*10^9,(pos(:,2)-neg(:,2)-pre_signal_average)*10^3/amp_factor,'-','Color','#464646','LineWidth',2.5,'DisplayName','Raw TGS trace')
                 hold on
 %               %%%%%%plot vertical line at start time
-                plot([fixed_short(start_index2,1) fixed_short(start_index2,1)]*10^9,ylim,'g--','LineWidth',5,'DisplayName','Start Index')
+                plot([total_signal(start_index2,1) total_signal(start_index2,1)]*10^9,ylim,'--','Color','#71C371','LineWidth',2.5,'DisplayName','Start index')
                 hold on
-                plot([neg(time_index,1)-time_naught neg(time_index,1)-time_naught]*10^9,ylim,'c--','LineWidth',5,'DisplayName','Time Index')
+                plot([neg(pump_time_index,1)-time_naught neg(pump_time_index,1)-time_naught]*10^9,ylim,'--','Color','#7DD3DA','LineWidth',2.5,'DisplayName','Time index')
                 hold on
-                plot(fixed_short(start_index2:end,1)*10^9,(f2(fixed_short(start_index2:end,1)))*10^3/amp_factor,'r--','LineWidth',5,'DisplayName','Full Functional Fit')
-                %disp(fixed_short(start_index2:end,1)*10^9);
-                %disp(f2(fixed_short(start_index2:end,1)));
+                plot(total_signal(start_index2:end,1)*10^9,(f2(total_signal(start_index2:end,1)))*10^3/amp_factor,'--','Color','#C43838','LineWidth',2.5,'DisplayName','Full functional fit')
                 hold on
-                plot(fixed_short(start_index2:end,1)*10^9,(f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor,'-','Color',[0 0 0.75],'LineWidth',5,'DisplayName','Thermal Fit')
-                %disp((f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor);
+                plot(total_signal(start_index2:end,1)*10^9,(f_remove_sine(total_signal(start_index2:end,1)))*10^3/amp_factor,'-','Color','#3E59DC','LineWidth',2.5,'DisplayName','Thermal fit')
                 
                 if printFitsToFiles
                     printFile1 = 'DataOfRaw.txt';
                     fid1 = fopen( printFile1, 'w' );
                     fprintf(fid1, 'time[ns] Raw_signal[mV]\n');
                     for i=1:length(neg(:,1))
-                        fprintf(fid1, '%6f %6f\n',(neg(i,1)-time_naught)*10^9, (pos(i,2)-neg(i,2)-long_base)*10^3/amp_factor);
+                        fprintf(fid1, '%6f %6f\n',(neg(i,1)-time_naught)*10^9, (pos(i,2)-neg(i,2)-pre_signal_average)*10^3/amp_factor);
                     end
                     fclose(fid1);
                     
                     %this second print only goes part of the way through the file and then throws an error but it will do!
                     printFile2 = 'DataOfFits.txt';
                     fid2 = fopen( printFile2, 'w' );
-                    thermalFunc = (f_remove_sine(fixed_short(start_index2:end,1)))*10^3/amp_factor;
+                    thermalFunc = (f_remove_sine(total_signal(start_index2:end,1)))*10^3/amp_factor;
                     fprintf(fid2, 'fit_time[ns] Functional_fit[mV] Thermal_fit[mV]\n');
-                    for i=start_index2:length(fixed_short(:,1))
-                        fprintf(fid2, '%6f %6f %6f\n', fixed_short(i,1)*10^9, (f2(fixed_short(i,1)))*10^3/amp_factor, thermalFunc(i+1-start_index2,1));
+                    for i=start_index2:length(total_signal(:,1))
+                        fprintf(fid2, '%6f %6f %6f\n', total_signal(i,1)*10^9, (f2(total_signal(i,1)))*10^3/amp_factor, thermalFunc(i+1-start_index2,1));
                     end
                     fclose(fid2);
                 end
                 
                 hold on
                 xlim([-5 end_time*10^9])
-%                 xlim([-5 50])
-%                 ylim([10 30])
-                set(gcf,'Position',[0 0 1920 1080])
-%             annotation('textbox',[0.02 0.01 0.5 0.03],'String',overlay2,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
-%             annotation('textbox',[0.02 0.01 0.5 0.03],'String',strcat('Time Index = ',num2str(time_index)),'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
-%             annotation('textbox',[0.6 0.01 0.35 0.03],'String',overlay1,'FontSize',25,'FontName','Arial','FontWeight','bold','LineStyle','none')
+                set(gcf,'Position',[0 0 1520 880])
                 hold on
                 set(gca,...
                     'FontUnits','points',...
                     'FontWeight','normal',...
                     'FontSize',30,...
-                    'FontName','Helvetica',...
-                    'LineWidth',5)
-                ylabel({'Signal Amplitude [mV]'},...
+                    'FontName','Times',...
+                    'LineWidth',1.5)
+                ylabel({'Signal amplitude [mV]'},...
                     'FontUnits','points',...
                     'FontSize',40,...
-                    'FontName','Helvetica')
+                    'FontName','Times')
                 xlabel({'Time [ns]'},...
                     'FontUnits','points',...
                     'FontSize',40,...
-                    'FontName','Helvetica')
+                    'FontName','Times')
             legend('Location','southeast')
 
-    % Display the already-made FFT as an inset image
+            % Display the already-made FFT as an inset image
             if ~steel
-                axes('pos',[.48 .48 .5 .5])
+                axes('pos',[.48 .48 .42 .42])
                 imshow('TGS_FFT.png')
                 saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
             end
