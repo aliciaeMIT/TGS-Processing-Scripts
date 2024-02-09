@@ -110,22 +110,22 @@ SNR_fft = snr(fft(:,2),fft_noise(:,2));
 if plotty
     figure()
 %     axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',5)
-    plot(fft(:,1),fft(:,2),'k-','LineWidth',3)%'DisplayName','Raw FFT Data');
+    plot(fft(:,1),fft(:,2),'-','LineWidth',2.5,'Color','#464646')%'DisplayName','Raw FFT Data');
     hold on
 %     txt = [num2str(DPA)];
 %     text(0.1,0.8,txt,'HorizontalAlignment','left','FontSize',28)
-    xline(LB(2),'b-','LineWidth',3,'DisplayName','Lower bound');
+    xline(LB(2),'-','LineWidth',2.5,'DisplayName','Lower bound','Color','#3E59DC');
     hold on
-    xline(UB(2),'b-','LineWidth',3,'DisplayName','Upper bound');
+    xline(UB(2),'-','LineWidth',2.5,'DisplayName','Upper bound','Color','#3E59DC');
     hold on
 %     plot(fft(:,1),new_fft_amp,'k-','LineWidth',3)%'DisplayName','Raw FFT Data');
     hold on
 %     plot(fft_noise(:,1),fft_noise(:,2),'c','LineWidth',3,'DisplayName','Noise');
 %     hold on
-    plot(fft(:,1),f0(fft(:,1)),'r--','LineWidth',3,'DisplayName','First SAW Frequency Fit');
+    plot(fft(:,1),f0(fft(:,1)),'--','LineWidth',2.5,'DisplayName','First SAW Frequency Fit','Color','#C43838');
     hold on
     if two_mode
-        plot(fft(:,1),f1(fft(:,1)),'b--','LineWidth',3,'DisplayName','Second SAW Frequency Fit');
+        plot(fft(:,1),f1(fft(:,1)),'--','LineWidth',2.5,'DisplayName','Second SAW Frequency Fit','Color','#C43838');
         hold on
         plot([fft(st_two_mode,1) fft(st_two_mode,1)],[-0.005 max_val+0.005],'g--','LineWidth',3)
         hold on
@@ -139,16 +139,16 @@ if plotty
         'FontUnits','points',...
         'FontWeight','normal',...
         'FontSize',24,...
-        'FontName','Helvetica',...
-        'LineWidth',3)
+        'FontName','Times',...
+        'LineWidth',1.5)
     ylabel({'Intensity [a.u.]'},...
         'FontUnits','points',...
         'FontSize',24,...
-        'FontName','Helvetica')
+        'FontName','Times')
     xlabel({'Frequency [GHz]'},...
         'FontUnits','points',...
         'FontSize',24,...
-        'FontName','Helvetica')
+        'FontName','Times')
 %     legend('Location','northwest')
     saveas(gcf,"TGS_FFT.png")
 %     saveas(gcf,strcat(pos_file,"_TGS_FFT.png"))
