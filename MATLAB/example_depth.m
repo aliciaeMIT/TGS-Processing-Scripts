@@ -1,7 +1,5 @@
 % directory location
 pname = 'example_data\tungsten_depth_study'; %ADJUST
-dir=cd(pname);
-cd(dir)
 %First part of file name and number of spots
 str_base='Tungsten_Calibration-2022-05-19-0';  %ADJUST
 %Change filename modifying number here
