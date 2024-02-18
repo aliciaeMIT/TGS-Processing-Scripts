@@ -1,7 +1,6 @@
 %%%%%%%%%%%%%%%%%%%
 %Either run from directory containing all raw TGS data files for this exposure, or change directory here (or both :) )
 pname = 'example_data\tungsten_depth_study';
-dir=cd(pname);
 %%%%%%%%%%%%%%%%%%%
 close all;
 
