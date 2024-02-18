@@ -5,8 +5,6 @@
 %------------------------------------------------------------------------------------------------------------------------------------------------------
 % directory location
 pname = 'example_data\iron_parameter_study'; %ADJUST
-dir=cd(pname);
-cd(dir)
 %First part of file name and number of spots
 str_base='IronIrradiated_Fe3plus-2022-01-04-06.40um-unirradiated_';  %ADJUST
 %Change filename modifying number here
