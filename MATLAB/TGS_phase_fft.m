@@ -1,215 +1,88 @@
-function [fft] = TGS_phase_fft(pos_file,neg_file,grat,psd_out,rangefrac,baselineBool,POSbaselineStr,NEGbaselineStr)
-%   For this use only, generate filtered fft for input data
-%   pos_file: positive phase data pos_file
-%   neg_file: negative phase data neg_file
-%   grat: grating, either calibrated or estimated, in um
-%   psd: if psd=1, save out power spectrum else, save out fft magnitude
-
-if nargin<4
-    psd_out=1;
-end
+function [fft] = TGS_phase_fft(SAW_only,psd_out,truncate_fraction)
+%   Generates a filtered fft of the SAW data. It is a revised version of
+%   TGS_phase_fft that doesn't read the raw files. Instead, it is made to
+%   work in the context of TGSPhaseAnalysis.
+%   SAW_only: This should be the total_signal w/ an erfc fit subtracted
+%   from it so it's macroscopically flat.
+%   psd: if psd=1, save out power spectrum, else save out fft magnitude
+%   truncate_fraction: What percentage of the signal should be analyzed (i.e,
+%   first 70%)
 
 %Boolean options for plotting and processing
 derivative=1;
-copy=0;
-plotty=0;
+copy=0; % set true if you want to double the signal, mirroring it to artificially increase the frequency resolution. This is a quirk of the matlab way of doing power spectral densities
 plotfft=0;
 saveout=0;
-combo=0;            % Calculates a linear combination of normal FFT and FFT from derv of 'flat'
-cut_tails=1000;     % Fraction of data removed from beginning and end of FFT spectra %Angus changed this from 3000 to 1000
+cut_tails=1000; % Fraction of data removed from beginning and end of power spectral density spectra
 
-hdr_len=16;
-
-if nargin<5
-    rangefrac=0.75;
-end
-
-%read in data files for this procedure
-pos=dlmread(pos_file,'',hdr_len,0);
-neg=dlmread(neg_file,'',hdr_len,0);
-% neg=dlmread(neg_file,'',hdr_len+36,0);
-% neg(:,1)=neg(:,1)-neg(1,1); %%%%% Comment when cables are same length
-if baselineBool
-    posbas=dlmread(POSbaselineStr,'',hdr_len,0);
-    negbas=dlmread(NEGbaselineStr,'',hdr_len,0);
-    
-    % negbas(:,1)=negbas(:,1)-negbas(1,1); %%%%% Comment when cables are same length
-    %
-    % %%%%%%%%%%% UNCOMMENT FOR F'd UP BASELINE
-    pos(:,2)=pos(:,2)-posbas(:,2);
-    neg(:,2)=neg(:,2)-negbas(:,2);
-end
-%normalize each set of data to the zero level before the pump impulse
-pos(:,2)=pos(:,2)-mean(pos(1:50,2));
-neg(:,2)=neg(:,2)-mean(neg(1:50,2));
-
-% %%%%%%%%% Plot to see the offset when there is a delay between detectors
-% figure()
-% plot(pos(1:1500,1),pos(1:1500,2))
-% hold on
-% plot(neg(1:1500,1),neg(1:1500,2))
-% [x1,y1]=max(pos(:,2));
-% [x2,y2]=min(neg(:,2));
-% display(y1)
-% display(y2)
-
-% %%%%%% Take this out later / if positive signal sucks
-% pos(:,2)=0;
-
-[~,time_index]=max(neg(1:1000,2));
-time_naught=neg(time_index,1);
-
-
-%If recorded traces differ in length, fix them to shorter of the two
-if length(pos(:,1))>length(neg(:,1))
-    pos=pos(1:length(neg(:,1)),:);
-elseif length(pos(:,1))<length(neg(:,1))
-    neg=neg(1:length(pos(:,1)),:);
-end
-
-fixed_short=[pos(:,1) pos(:,2)-neg(:,2)];
-
-% Change back to fix_index
-[~,fix_index]=max(fixed_short(:,2));
-% fixed_short=fixed_short(fix_index:end,:);
-fixed_short=fixed_short(100:end,:);
-
-if saveout
-    dlmwrite('dat_temp.txt',fixed_short);
-end
-
-if plotty
-    figure()
-    plot(fixed_short(:,1),fixed_short(:,2),'r')
-    title('this is fixed short');
-end
-
-%normalize to initial level before pump pulse
-fixed_short(:,2)=fixed_short(:,2)-mean(fixed_short(end-50:end,2));
-
-fixed_short(:,1)=fixed_short(:,1)-fixed_short(1,1); %slide peak back to 0 to fit more easily
-
-%Take a fit to a purely erfc() decay to subtract a decay profile before
-%taking fft
-q=2*pi/(grat*10^(-6));
-LB=[0 0 0];
-UB=[10 5*10^-4 0.1];
-ST=[0.05 5*10^-5 0];
-OPS=fitoptions('Method','NonLinearLeastSquares','Lower',LB,'Upper',UB,'Start',ST);
-TYPE=fittype('A.*erfc(q*sqrt(k*(x)))+c;','options',OPS,'problem','q','coefficients',{'A','k','c'});
-
-[f0,~]=fit(fixed_short(:,1),fixed_short(:,2),TYPE,'problem',q);
-
-if plotty
-    %plot fit to see how well it matches
-    figure()
-    plot(fixed_short(:,1),f0(fixed_short(:,1)),'b',fixed_short(:,1),fixed_short(:,2),'r');
-    title('this is an erfc(..) fit of fixed short');
-end
-
-%this is the thermal decay filtering of the signal recorded vs time. This will clean up the DC end of the power spectrum
-flat1=[fixed_short(:,1) fixed_short(:,2)-f0(fixed_short(:,1))];
-
-% Shorten 'flat1' to 'flat' so the FFT samples better data
-newlength=ceil(numel(fixed_short(:,1))*rangefrac);
-flat=zeros(newlength,2);
-flat(:,1)=flat1(1:newlength,1);
-flat(:,2)=flat1(1:newlength,2)/max(flat1(1:newlength,2));
+% Shorten 'SAW_only' to 'SAW_only_truncated' so the FFT samples better data
+% and normalise it to the maximum value
+newlength=ceil(numel(SAW_only(:,1))*truncate_fraction);
+SAW_only_truncated=zeros(newlength,2);
+SAW_only_truncated(:,1)=SAW_only(1:newlength,1);
+SAW_only_truncated(:,2)=SAW_only(1:newlength,2)/max(SAW_only(1:newlength,2));
 
 if copy
-    flat2=zeros(newlength*2-1,2);
-    for i=1:length(flat(:,1))
-        flat2(i,1)=flat(i,1);
-        flat2(i,2)=flat(i,2);
+    SAW_only_truncated_mirrored=zeros(newlength*2-1,2);
+    for i=1:length(SAW_only_truncated(:,1))
+        SAW_only_truncated_mirrored(i,1)=SAW_only_truncated(i,1);
+        SAW_only_truncated_mirrored(i,2)=SAW_only_truncated(i,2);
     end
-    for i=length(flat(:,1))+2:length(flat2(:,1))+1
-        flat2(i-1,2)=flat((2*length(flat(:,1))+1)-i,2);
-        flat2(i-1,1)=flat(i-length(flat(:,1)),1)+flat(length(flat(:,1)),1);
+    for i=length(SAW_only_truncated(:,1))+2:length(SAW_only_truncated_mirrored(:,1))+1
+        SAW_only_truncated_mirrored(i-1,2)=SAW_only_truncated((2*length(SAW_only_truncated(:,1))+1)-i,2);
+        SAW_only_truncated_mirrored(i-1,1)=SAW_only_truncated(i-length(SAW_only_truncated(:,1)),1)+SAW_only_truncated(length(SAW_only_truncated(:,1)),1);
     end
-    clear flat
-    flat=flat2;
+    clear SAW_only_truncated
+    SAW_only_truncated=SAW_only_truncated_mirrored;
 end
-
-xx=0:1e-11:6e-9;
-yy=spline(flat(:,1),flat(:,2),xx);
-
-if plotty
-    figure()
-    plot(flat(:,1),flat(:,2),'o',xx,yy,'x')    
-    title('this is fixed short minus the erfc(..) fit and shortened');
-end
-
-% clear flat
-% flat=zeros(length(xx),2);
-% flat(:,1) = xx;
-% flat(:,2) = yy;
 
 % Time step info necessary for differentiation and flat padding
-tstep=flat(end,1)-flat(end-1,1);
+tstep=SAW_only_truncated(end,1)-SAW_only_truncated(end-1,1);
 
 % If option selected, take transform of derivative of recorded signal
-% to filter out DC even more than just the background subtraction
-d_flat=diff(flat(:,2))/tstep;
-d_flat=d_flat/max(d_flat);
+% to filter out DC even more than just the background subtraction. This
+% derivative is then normalized by the maximum.
+SAW_only_derivative=diff(SAW_only_truncated(:,2))/tstep;
+SAW_only_derivative=SAW_only_derivative/max(SAW_only_derivative);
 if derivative
-    flat=[flat(1:length(d_flat),1) d_flat];
+    SAW_only_truncated=[SAW_only_truncated(1:length(SAW_only_derivative),1) SAW_only_derivative];
 end
-
-if combo
-    dflat=[flat(1:length(d_flat),1) d_flat];
-%     flat=[flat(1:length(d_flat),1) d_flat+flat(1:length(d_flat),2)];
-end
-
 
 % Find the stuff we need to take the spectral profile
-num=length(flat(:,1));
-fs=num/(flat(end,1)-flat(1,1));
-p=18; %magnitude of zero padding to increase resolution in power spectrum
-pdsize=2^p-num-2; %more padding = smoother transform
+num_points=length(SAW_only_truncated(:,1));
+sampling_rate=num_points/(SAW_only_truncated(end,1)-SAW_only_truncated(1,1));
+padding=18; %magnitude of zero padding to increase resolution in power spectrum
+padsize=2^padding-num_points-2; %more padding = smoother transform
 
 %Only pad on the positive end
 pad_val=0;
-% pad_val=mean(flat(end-50:end,2));
-pad=zeros(pdsize,1);
+pad=zeros(padsize,1);
 pad(1:end)=pad_val;
-tpad=flat(end,1):tstep:flat(end,1)+(pdsize-1)*tstep;
+padded_end_time=SAW_only_truncated(end,1):tstep:SAW_only_truncated(end,1)+(padsize-1)*tstep; %this makes sure that the padded data has a sensible end point in time, consistent with the regular data.
 
-flat_pad=[flat(:,1) flat(:,2);tpad' pad];
+SAW_only_padded=[SAW_only_truncated(:,1) SAW_only_truncated(:,2);padded_end_time' pad];
 
-nfft=length(flat_pad(:,2));
+number_of_fft_points=length(SAW_only_padded(:,2));
 %Find the Power Spectral density
 
 %Use a hamming window and a Welchs method. Hamming does the best of the
 %ones I've tried and Welch does slightly better than the normal
 %periodogram.
-[psd,freq]=periodogram(flat_pad(:,2),rectwin(nfft),nfft,fs); %periodogram method
+[power_spectral_density,freq]=periodogram(SAW_only_padded(:,2),rectwin(number_of_fft_points),number_of_fft_points,sampling_rate); %periodogram method
 
-psdlenadj=ceil(numel(psd)*(1/5))-6*cut_tails;
-psd(1:cut_tails)=0;
-psd(psdlenadj:end)=0;
-psd=psd/(max(psd));
-
-if combo
-    dflat_pad=[dflat(:,1) dflat(:,2);tpad' pad];
-    nfftd=length(dflat_pad(:,2));
-    [psd_d,freq_d]=periodogram(dflat_pad(:,2),rectwin(nfftd),nfftd,fs); %periodogram method
-    
-    psdlenadj=ceil(numel(psd_d)*(1/5))-cut_tails;
-    psd_d(1:cut_tails)=0;
-    psd_d(psdlenadj:end)=0;
-    psd_d=psd_d/(max(psd_d));
-    
-    psd=psd(1:end-1)+psd_d(1:end);
-end
+psd_length_adjust=ceil(numel(power_spectral_density)*(1/5))-6*cut_tails; %trim off the end of the fft
+power_spectral_density(1:cut_tails)=0;
+power_spectral_density(psd_length_adjust:end)=0;
+power_spectral_density=power_spectral_density/(max(power_spectral_density));
 
 %Don't save out DC spike in FFT/PSD
 if psd_out
-    amp=psd(1:end);
+    output_amplitude=power_spectral_density(1:end);
 else
-    amp=sqrt(psd(1:end));
+    output_amplitude=sqrt(power_spectral_density(1:end));
 end
 
-fft=[freq(1:end-1) sgolayfilt(amp(1:length(freq(1:end-1))),5,201)];
+fft=[freq(1:end-1) sgolayfilt(output_amplitude(1:length(freq(1:end-1))),5,201)];
 
 if saveout
     dlmwrite('dat_spec.txt',out);
@@ -217,8 +90,8 @@ end
 
 if plotfft
     figure()
-    axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',2.5,'Color','#C43838')
-    plot(freq(1:end-1),sgolayfilt(output_amplitude(1:length(freq(1:end-1)))/max(output_amplitude),5,201),'LineWidth',1,'Color','#464646');
+    axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',5)
+    plot(freq(1:end-1),sgolayfilt(output_amplitude(1:length(freq(1:end-1)))/max(output_amplitude),5,201),'k','LineWidth',2);
     hold on
     xlim([0 1.0e9]);
     set(gca,...
@@ -226,7 +99,7 @@ if plotfft
         'FontWeight','normal',...
         'FontSize',24,...
         'FontName','Times',...
-        'LineWidth',1.5)
+        'LineWidth',3)
     ylabel({'Intensity [a.u.]'},...
         'FontUnits','points',...
         'FontSize',24,...
