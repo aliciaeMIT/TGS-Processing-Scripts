@@ -5,8 +5,6 @@ outputFileName = 'W_damaged_TGS_Outputs.txt';
 %First part of file name and number of spots
 str_base='Tungsten_Irradiation_5-2022-01-13-06.40um-irradiated_'; 
 spots=1:14;
-dir=cd(pname);
-cd(dir)
 %Baseline handling if no baseline arguments are provided, the code still works - it just doesn't do any baseline correction
 baselineBool = 1; % 1 for "yes do baseline subtraction", 0 for "no don't do that" 
 POSbaselineStr = pname + string('\Tungsten_Irradiation_5-2022-01-13-06.40um-baseline') + string('-POS-1.txt'); %ADJUST
