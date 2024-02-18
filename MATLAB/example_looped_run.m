@@ -1,7 +1,5 @@
 % directory location
 pname = 'example_data\eurofer_temperature_study'; %ADJUST
-dir=cd(pname);
-cd(dir)
 %First part of file name and number of spots
 str_base='Eurofer-HT_weld_2022-06-06-06.40um-';  %ADJUST
 %Change filename modifying number here
