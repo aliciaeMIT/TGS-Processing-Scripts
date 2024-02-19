@@ -38,7 +38,8 @@ function [frequency_final,frequency_error,SAW_speed,thermal_diffusivity,thermal_
 %   A:                                  diffracted response amplitude [Wm^-2]
 %   A_err:                              diffracted response amplitude error [Wm^-2]
 %   displacement_reflectance_ratio      ratio of diffraction contributions from thermoreflectance changes
-%                                       to those of surface displacement [s^0.5].
+%                                       to those of surface displacement [s^0.5]. This ratio is also 
+%                                       referred to as beta occasionally in these scripts
 %   displacement_reflectance_ratio_err: error on above ratio [s^0.5].
 %   B:                                  signal sinusoid contribution amplitude [Wm^-2].
 %   B_err:                              error on signal sinusoid contribution amplitude [Wm^-2].
