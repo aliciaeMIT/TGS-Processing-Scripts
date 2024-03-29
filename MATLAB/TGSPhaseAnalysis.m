@@ -224,7 +224,7 @@ end
 
 if plot_trace
     figure()
-    plot(neg(:,1)*10^9,(pos(:,2)-neg(:,2)-pre_signal_average)*10^3,'-','Color',[0 0 0.75],'LineWidth',1.25)
+    plot(neg(:,1)*10^9,(pos(:,2)-neg(:,2)-pre_signal_average)*10^3,'-','Color',[0 0 0],'LineWidth',1.25)
     hold on
     xlim([0 (end_time/2)*10^9])
     set(gca,...
