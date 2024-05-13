@@ -37,6 +37,7 @@ theta = 0;
 thetaErr = 0;
 C = 0;
 CErr = 0;
+file_date_time = ' ';
 disp('Begin parameter sweeping');
 
 %Run through each of the files, sweeping across gratings and peak-skips
@@ -57,7 +58,7 @@ for jj=1:length(spots)
     for i=-5:5 
         gratingMod = 1+i/100; %can edit this from 100 to 1000 if you want a finer sweep will take more time obvs.
         disp(['current run is: ', pos_str, '   with grating modifier: ', num2str(gratingMod)]);
-        [freq,freq_err,speed,diff,diff_err,tau(:,jj),tauErr, A, AErr, beta, betaErr, B, BErr, theta, thetaErr, C, CErr]=TGSPhaseAnalysis(pos_str,neg_str,grat*gratingMod,2,0,1,POSbaselineStr,NEGbaselineStr);
+        [freq,freq_err,speed,diff,diff_err,tau(:,jj),tauErr, A, AErr, beta, betaErr, B, BErr, theta, thetaErr, C, CErr, file_date_time]=TGSPhaseAnalysis(pos_str,neg_str,grat*gratingMod,2,0,1,POSbaselineStr,NEGbaselineStr);
         fidGratingSensitivity = fopen( printFileGratingSensitivity, 'a' );
         fprintf(fidGratingSensitivity, string('\n%.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g'), gratingMod, gratingMod*grat, freq, freq_err, A, AErr, diff, diff_err, beta, betaErr, B, BErr, theta, thetaErr, tau(3,jj), tauErr, C, CErr);
         fclose(fidGratingSensitivity);
@@ -73,7 +74,7 @@ for jj=1:length(spots)
     %Loop for the peak skipping scan.
     for i=1:4 %The TGS_phase_fft script is hard-coded to freak out above 4
         disp(['current run is: ', pos_str, '   with peak-skip parameter: ', num2str(i)]);
-        [freq,freq_err,speed,diff,diff_err,tau(:,jj),tauErr, A, AErr, beta, betaErr, B, BErr, theta, thetaErr, C, CErr]=TGSPhaseAnalysis(pos_str,neg_str,grat,i,0, 1, POSbaselineStr, NEGbaselineStr);
+        [freq,freq_err,speed,diff,diff_err,tau(:,jj),tauErr, A, AErr, beta, betaErr, B, BErr, theta, thetaErr, C, CErr, file_date_time]=TGSPhaseAnalysis(pos_str,neg_str,grat,i,0, 1, POSbaselineStr, NEGbaselineStr);
         fidPeakSkipSensitivity = fopen( printFilePeakSkipSensitivity, 'a' );
         fprintf(fidPeakSkipSensitivity, string('\n%.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g %.8g'), i, freq, freq_err, A, AErr, diff, diff_err, beta, betaErr, B, BErr, theta, thetaErr, tau(3,jj), tauErr, C, CErr);
         fclose(fidPeakSkipSensitivity);
