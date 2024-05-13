@@ -30,6 +30,8 @@ theta_cal = 0;
 thetaErr_cal = 0;
 C_cal = 0;
 CErr_cal = 0;
+file_date_time_cal = ' ';
+
 % Calibrated grating spacing
 pos_str_cal=strcat(calibration_filename_base,'-POS-1.txt');
 neg_str_cal=strcat(calibration_filename_base,'-NEG-1.txt');
@@ -55,6 +57,7 @@ theta = zeros(1,length(spots));
 thetaErr = zeros(1,length(spots));
 C = zeros(1,length(spots));
 CErr = zeros(1,length(spots));
+file_date_time = strings(1,length(spots));
 
 %Calculate fits for every data set and save output in arrays
 adder = 0;
@@ -71,7 +74,7 @@ for jj=1:length(spots)
     pos_str=strcat(pname,'\',str_base,num2str(spots(jj)+adder),'-POS-1.txt');
     neg_str=strcat(pname,'\',str_base,num2str(spots(jj)+adder),'-NEG-1.txt');
     disp(['current run is: ', pos_str]);
-    [freq(jj),freq_err(jj),speed(jj),diff(jj),diff_err(jj),tau(:,jj),tauErr(jj), A(jj), AErr(jj), beta(jj), betaErr(jj), B(jj), BErr(jj), theta(jj), thetaErr(jj), C(jj), CErr(jj)]=TGSPhaseAnalysis(pos_str,neg_str,grat,2,0,'overlay1','overlay2', baselineBool, POSbaselineStr, NEGbaselineStr);
+    [freq(jj),freq_err(jj),speed(jj),diff(jj),diff_err(jj),tau(:,jj),tauErr(jj), A(jj), AErr(jj), beta(jj), betaErr(jj), B(jj), BErr(jj), theta(jj), thetaErr(jj), C(jj), CErr(jj), file_date_time(jj)]=TGSPhaseAnalysis(pos_str,neg_str,grat,2,0,'overlay1','overlay2', baselineBool, POSbaselineStr, NEGbaselineStr);
 end
 
 printFile1 = pname + string('\') + outputFileName;
