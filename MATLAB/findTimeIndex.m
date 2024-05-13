@@ -31,11 +31,13 @@ minprom=5*max(second_derv(1:50));
 
 %%%%%%%%% Make sure the peak it is using is the first after the rise of the
 %%%%%%%%% raw trace
+[~,dervmax_index]=max(pos_val) %addition
 if length(pos_loc)>0
-    if pos_loc(1)<derv_index
-        derv_index=pos_loc(1);
+    if pos_loc(dervmax_index)<derv_index
+        derv_index=pos_loc(dervmax_index);
     end
 end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Assign pump_time_index and end time values %%%%%%%%%%%%%%%%
 %%%%%%%%% Determine indices for different methods and assign end times
