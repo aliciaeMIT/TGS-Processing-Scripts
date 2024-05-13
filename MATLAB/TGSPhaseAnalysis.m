@@ -5,7 +5,7 @@
 %   Modified by B.R. Dacus, A.P.C. Wylie, K. Zoubkova and S. Engebretson.
 
 
-function [frequency_final,frequency_error,SAW_speed,thermal_diffusivity,thermal_diffusivity_err,acoustic_damping_constant, acoustic_damping_error, A, A_err, displacement_reflectance_ratio, displacement_reflectance_ratio_err, B, B_err, acoustic_phase, acoustic_phase_err, C, C_err] = TGSPhaseAnalysis(pos_file,neg_file,grating,start_point,two_SAW_frequencies,baselineBool,POSbaselineStr,NEGbaselineStr)
+function [frequency_final,frequency_error,SAW_speed,thermal_diffusivity,thermal_diffusivity_err,acoustic_damping_constant, acoustic_damping_error, A, A_err, displacement_reflectance_ratio, displacement_reflectance_ratio_err, B, B_err, acoustic_phase, acoustic_phase_err, C, C_err, file_date_time] = TGSPhaseAnalysis(pos_file,neg_file,grating,start_point,two_SAW_frequencies,baselineBool,POSbaselineStr,NEGbaselineStr)
 %   Data is saved in two files, positive (with one heterodyne phase of pi/2) and
 %   negative (with another of -pi/2), must provide both files
 %
@@ -204,6 +204,15 @@ end
 %normalize each set of data to the zero level before the pump impulse
 pos(:,2)=pos(:,2)-mean(pos(1:50,2));
 neg(:,2)=neg(:,2)-mean(neg(1:50,2));
+
+%Elena addition to save the time when measurement was taken%                         
+t=fopen(pos_file,'r');                                        
+t1= textscan(t, '%s %s %f %f %f', 'Delimiter', ';');     
+t2=t1{1}(14);
+t3=t1{1}(5);
+file_date = datetime(t3{1}(5:end),'Format','yyyy MMMM dd');
+file_time=datetime(t2{1}(16:end),'Format','HH:mm:ss');
+file_date_time = strcat(string(file_date,'yyyy_MM_dd'),'_',string(file_time,'HH:mm:ss'));
 
 %%%%%Time indexing block%%%%%%%%
 [pump_time_index,end_time]=findTimeIndex(pos,neg);
