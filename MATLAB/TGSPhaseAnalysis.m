@@ -2,7 +2,7 @@
 %   12 in Dennett et al. (2018) [https://doi.org/10.1063/1.5026429] - using
 %   a Levenberg-Marquardt nonlinear least squares method.
 %   Created by C.A. Dennett.
-%   Modified by B.R. Dacus, A.P.C. Wylie, K. Zoubkova and S. Engebretson.
+%   Modified by B.R. Dacus, A.P.C. Wylie, K. Zoubkova, S. Engebretson and E. Botica Artalejo.
 
 
 function [frequency_final,frequency_error,SAW_speed,thermal_diffusivity,thermal_diffusivity_err,acoustic_damping_constant, acoustic_damping_error, A, A_err, displacement_reflectance_ratio, displacement_reflectance_ratio_err, B, B_err, acoustic_phase, acoustic_phase_err, C, C_err, file_date_time] = TGSPhaseAnalysis(pos_file,neg_file,grating,start_point,two_SAW_frequencies,baselineBool,POSbaselineStr,NEGbaselineStr)
