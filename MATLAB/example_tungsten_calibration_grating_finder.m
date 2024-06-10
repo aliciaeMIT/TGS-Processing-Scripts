@@ -13,7 +13,7 @@ baselineBool = 0; % 1 for "yes do baseline subtraction", 0 for "no don't do that
 POSbaselineStr = pname + string('\Tungsten_Calibration-2022-05-19-03.70um-baseline') + string('-POS-1.txt'); %ADJUST
 NEGbaselineStr = pname + string('\Tungsten_Calibration-2022-05-19-03.70um-baseline') + string('-NEG-1.txt'); %ADJUST
 
-[freq_final,freq_error,speed,diffusivity,diffusivity_err,tau, tauErr, paramrA, AErr, ParamBeta, BetaErr, paramB, BErr, paramTheta, thetaErr, paramC, CErr, file_date_time] = TGSPhaseAnalysis(posstr,negstr,grat,2,0,baselineBool, POSbaselineStr, NEGbaselineStr);
+[freq_final,freq_error,speed,diffusivity,diffusivity_err,tau, tauErr, paramrA, AErr, ParamBeta, BetaErr, paramB, BErr, paramTheta, thetaErr, paramC, CErr, file_date_time] = TGSPhaseAnalysis(strcat(pname,posstr),strcat(pname,negstr),grat,2,0,baselineBool, POSbaselineStr, NEGbaselineStr);
 disp('Frequency = ');
 disp(freq_final);
 disp('Frequency error = ');
