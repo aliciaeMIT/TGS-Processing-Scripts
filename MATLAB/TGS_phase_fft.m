@@ -70,9 +70,9 @@ number_of_fft_points=length(SAW_only_padded(:,2));
 %periodogram.
 [power_spectral_density,freq]=periodogram(SAW_only_padded(:,2),rectwin(number_of_fft_points),number_of_fft_points,sampling_rate); %periodogram method
 
-psd_length_adjust=ceil(numel(power_spectral_density)*(1/5))-6*cut_tails; %trim off the end of the fft
-power_spectral_density(1:cut_tails)=0;
-power_spectral_density(psd_length_adjust:end)=0;
+%psd_length_adjust=ceil(numel(power_spectral_density)*(1/5))-6*cut_tails; %trim off the end of the fft
+%power_spectral_density(1:cut_tails)=0;
+%power_spectral_density(psd_length_adjust:end)=0;
 power_spectral_density=power_spectral_density/(max(power_spectral_density));
 
 %Don't save out DC spike in FFT/PSD
