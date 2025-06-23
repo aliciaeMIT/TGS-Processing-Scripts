@@ -19,7 +19,7 @@ total_signal=[pos(:,1) pos(:,2)-neg(:,2)];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% Methods for finding time_index %%%%%%%%%%%%%%%%
 %%%%%%%%% Find Time Index from Trace MAX
-[max_trace,max_time]=max(total_signal(1:600,2));
+[max_trace,max_time]=max(total_signal(:,2));
 
 
 %%%%%%%%% Find Time Index from Second Derivative
