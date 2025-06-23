@@ -43,12 +43,13 @@ end
 %%%%%%%%% Determine indices for different methods and assign end times
 time_len=length(pos(:,1))/1000;
 if time_len < 5
-    end_time=2e-7; %for 20ns base on scope
+    %for 20ns base on scope
     derv_index = derv_index-off_20ns;
 else
-    end_time=5e-7; %for 50ns base on scope
+    %for 50ns base on scope
     derv_index = derv_index-off_50ns;
 end
+end_time=max(total_signal(:,1))
 pump_time_index = derv_index;
 
 %%%%%%%%% Plot
