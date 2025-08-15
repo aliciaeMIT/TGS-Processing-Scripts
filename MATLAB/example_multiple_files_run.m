@@ -5,6 +5,7 @@ str_base='Y0.7Cu0.7Mo-sample_1.1-06.40um-spot1-';  %ADJUST
 % Calibrated grating spacings
 grat = 6.6213; %in um %ADJUST
 
+numberOfRuns = 158;
 % baseline handling
 blbool = 1;
 baselinePOS = pname + string('\') + 'Y0.7Cu0.7Mo-sample_1.1-06.40um-baseline-POS-1.txt';
@@ -16,7 +17,7 @@ freq_err=0;
 speed=0;
 diff=0;
 diff_err=0;
-tau=zeros(3,158); % The second dimension of this array needs to match the total number of times TGSPhaseAnalysis is run
+tau=zeros(3,numberOfRuns); % The second dimension of this array needs to match the total number of times TGSPhaseAnalysis is run
 tau_err = 0;
 A = 0;
 AErr = 0;
@@ -38,7 +39,7 @@ fclose(fid1);
 
 %Run through each of the files, generating a new filename each time, then
 %write all the outputs to a file
-for i=1:158
+for i=1:numberOfRuns
     close all
     pos_str = strcat(pname,string('\'),str_base,"POS-",num2str(i),'.txt');
     neg_str = strcat(pname,string('\'),str_base,"NEG-",num2str(i),'.txt');
