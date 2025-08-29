@@ -54,6 +54,8 @@ function [frequency_final,frequency_error,SAW_speed,thermal_diffusivity,thermal_
 %that have more than one acoustic mode.
 %%%%%%%%%%%%%%%%%%%
 %Settings for various plotting and output options to be set by boolean arguments
+maximum_iterations_LM=10000; %the number of iterations the Levenberg-Marquardt fit will go through (historically defaulted to 400)
+max_evaluations_LM=2000; %number of function evaluations (this historically has not been stated and defaults to 200*[number of fitting params])
 find_max=0; %gives the option to manually locate the beginning time t_0
 plot_everything=0; %plots a bunch of extra graphs at certain steps to check things
 plot_trace=1; %plots pos - neg file data
@@ -319,7 +321,7 @@ else
             UB=[1 5*10^-4]; % Increased to account for silver-alloys, which are REALLY HIGH thermal diffusivity
             ST=[.05 5*10^-6];
 
-            OPS=fitoptions('Method','NonLinearLeastSquares','Lower',LB,'Upper',UB,'Start',ST);
+            OPS=fitoptions('Method','NonLinearLeastSquares','Lower',LB,'Upper',UB,'Start',ST,'MaxIter', maximum_iterations_LM, 'MaxFunEvals', max_evaluations_LM);
             TYPE=fittype('A.*erfc(q*sqrt(k*(x+time_max)))','options',OPS,'problem',{'q','time_max'},'coefficients',{'A','k'});
             [f0,gof]=fit(total_signal(:,1),total_signal(:,2),TYPE,'problem',{q,time_max});
 
@@ -363,7 +365,7 @@ else
                 UB1=[1 5*10^-4];   % Increased to account for silver-alloys, which are REALLY HIGH thermal diffusivity
                 ST1=[.05 10^-5];
 
-                OPS1=fitoptions('Method','NonLinearLeastSquares','Lower',LB1,'Upper',UB1,'Start',ST1);
+                OPS1=fitoptions('Method','NonLinearLeastSquares','Lower',LB1,'Upper',UB1,'Start',ST1,'MaxIter', maximum_iterations_LM, 'MaxFunEvals', max_evaluations_LM);
                 TYPE1=fittype('A.*(erfc(q*sqrt(k*(x+start_time)))-beta*exp(-q^2*k*(x+start_time))./sqrt((x+start_time)))','options',OPS1,'problem',{'q','beta','start_time'},'coefficients',{'A','k'});
                 [f1,gof]=fit(total_signal(start_index:end,1),total_signal(start_index:end,2),TYPE1,'problem',{q,beta,start_time});
 
@@ -429,7 +431,7 @@ else
                 UB2=[1 up_bound(1) up_bound(2) 10 2*pi up_t 5e-3];
                 ST2=[.05 thermal_diffusivity beta 0.05 0 start_tau 0];
 
-                OPS2=fitoptions('Method','NonLinearLeastSquares','Lower',LB2,'Upper',UB2,'Start',ST2);
+                OPS2=fitoptions('Method','NonLinearLeastSquares','Lower',LB2,'Upper',UB2,'Start',ST2,'MaxIter', maximum_iterations_LM, 'MaxFunEvals', max_evaluations_LM);
                 TYPE2=fittype('A.*(erfc(q*sqrt(k*(x+start_time)))-beta*exp(-q^2*k*(x+start_time))./sqrt((x+start_time)))+B.*sin(2*pi*(peak_freq)*(x+start_time)+p)*exp(-(x+start_time)/t)+D','options',OPS2,'problem',{'q','start_time','peak_freq'},'coefficients',{'A','k','beta','B','p','t','D'});
                 [f2,gof]=fit(total_signal(start_index2:end,1),total_signal(start_index2:end,2),TYPE2,'problem',{q,start_time2,peak_freq});
 
@@ -443,7 +445,7 @@ else
                 UB2=[1 up_bound(1) up_bound(2) 10 2*pi 5e-3];
                 ST2=[.05 thermal_diffusivity beta 0.05 0 0];
 
-                OPS2=fitoptions('Method','NonLinearLeastSquares','Lower',LB2,'Upper',UB2,'Start',ST2);
+                OPS2=fitoptions('Method','NonLinearLeastSquares','Lower',LB2,'Upper',UB2,'Start',ST2,'MaxIter', maximum_iterations_LM, 'MaxFunEvals', max_evaluations_LM);
                 TYPE2=fittype('A.*(erfc(q*sqrt(k*(x+start_time)))-beta*exp(-q^2*k*(x+start_time))./sqrt((x+start_time)))+B.*sin(2*pi*(peak_freq)*(x+start_time)+p)*exp(-(x+start_time)/t)+D','options',OPS2,'problem',{'q','start_time','peak_freq','t'},'coefficients',{'A','k','beta','B','p','D'});
                 [f2,gof]=fit(total_signal(start_index2:end,1),total_signal(start_index2:end,2),TYPE2,'problem',{q,start_time2,peak_freq,pp_tau});
             end
@@ -573,7 +575,7 @@ else
         STamp=[.1 5*10^-5 .1];
         start_time=pump_time_index*scope_timebase;
 
-        OPSamp=fitoptions('Method','NonLinearLeastSquares','Lower',LBamp,'Upper',UBamp,'Start',STamp);
+        OPSamp=fitoptions('Method','NonLinearLeastSquares','Lower',LBamp,'Upper',UBamp,'Start',STamp,'MaxIter', maximum_iterations_LM, 'MaxFunEvals', max_evaluations_LM);
         TYPEamp=fittype('(A./sqrt((x+start_time)))*exp(-q^2*k*(x+start_time))+D','options',OPSamp,'problem',{'q','start_time'},'coefficients',{'A','k','D'});
         [famp,gof]=fit(total_signal(pump_time_index:end,1),total_signal(pump_time_index:end,2),TYPEamp,'problem',{q,start_time});
 
