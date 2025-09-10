@@ -31,7 +31,7 @@ minprom=5*max(second_derv(1:50));
 
 %%%%%%%%% Make sure the peak it is using is the first after the rise of the
 %%%%%%%%% raw trace
-[~,dervmax_index]=max(pos_val) %addition
+[~,dervmax_index]=max(pos_val); %addition
 if length(pos_loc)>0
     if pos_loc(dervmax_index)<derv_index
         derv_index=pos_loc(dervmax_index);
@@ -49,12 +49,12 @@ else
     %for 50ns base on scope
     derv_index = derv_index-off_50ns;
 end
-end_time=max(total_signal(:,1))
+end_time=max(total_signal(:,1));
 pump_time_index = derv_index;
 
 %%%%%%%%% Plot
 if plot_ti
-    figure()
+    figure('Windowstyle','docked')
     plot(total_signal(:,2),'k','LineWidth',3)
     xlim([0 max_time+50])
     ylim([-0.005 max_trace+0.005])

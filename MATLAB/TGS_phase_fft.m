@@ -89,7 +89,7 @@ if saveout
 end
 
 if plotfft
-    figure()
+    figure('Windowstyle','docked')
     axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',5)
     plot(freq(1:end-1),sgolayfilt(output_amplitude(1:length(freq(1:end-1)))/max(output_amplitude),5,201),'k','LineWidth',2);
     hold on

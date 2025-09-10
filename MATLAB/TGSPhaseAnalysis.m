@@ -3,6 +3,7 @@
 %   a Levenberg-Marquardt nonlinear least squares method.
 %   Created by C.A. Dennett.
 %   Modified by B.R. Dacus, A.P.C. Wylie, K. Zoubkova, S. Engebretson and E. Botica Artalejo.
+%   THIS COPY: Alicia's version
 
 
 function [frequency_final,frequency_error,SAW_speed,thermal_diffusivity,thermal_diffusivity_err,acoustic_damping_constant, acoustic_damping_error, A, A_err, displacement_reflectance_ratio, displacement_reflectance_ratio_err, B, B_err, acoustic_phase, acoustic_phase_err, C, C_err, file_date_time] = TGSPhaseAnalysis(pos_file,neg_file,grating,start_point,two_SAW_frequencies,baselineBool,POSbaselineStr,NEGbaselineStr)
@@ -58,12 +59,19 @@ maximum_iterations_LM=10000; %the number of iterations the Levenberg-Marquardt f
 max_evaluations_LM=2000; %number of function evaluations (this historically has not been stated and defaults to 200*[number of fitting params])
 find_max=0; %gives the option to manually locate the beginning time t_0
 plot_everything=0; %plots a bunch of extra graphs at certain steps to check things
-plot_trace=1; %plots pos - neg file data
+plot_trace=0; %plots pos - neg file data
 psd_out=1; % generates power spectrum density plots rather than FFT magnitudes
 plot_psd=1; %adds bonus lines in lorentzian_peak_fit plotting
 plot_final=1; % Generates the final plots with the fft inserts
-print_final_fit=1; % option to display the fitted functions of the exponential term and the full functional fit (I think?)
+print_final_fit=0; % option to display the fitted functions of the exponential term and the full functional fit (I think?)
 two_detectors=1; % tells the script what format the files are in based on number of detectors
+dock_figs=0;
+
+[pos_fpath, pos_fname, ~] = fileparts(pos_file);
+plot_dir = pos_fpath + "/plots/";
+mkdir(plot_dir)
+%mkdir(pos_fpath,"plots");
+
 
 %updated tstep parsing to better handle variable sampling rates that can happen if the scope is left in 4-channel mode rather than 2-channel mode.
 %in general, this should never happen as 20 gigasamples per second is how the scope should be configured, but accidents happen and this renders
@@ -146,6 +154,7 @@ if baselineBool == 1 && (isempty(POSbaselineStr) || isempty(NEGbaselineStr))
 end
 %End Kristyna addition to handle baseline arguments
 
+
 q=2*pi/(grating*10^(-6));
 
 %How far from guessed values for diffusivity and beta do you vary in the
@@ -218,8 +227,8 @@ file_date_time = strcat(string(file_date,'yyyy_MM_dd'),'_',string(file_time,'HH:
 
 %%%%%Time indexing block%%%%%%%%
 [pump_time_index,end_time]=findTimeIndex(pos,neg);
-display(['Time Index is: ',num2str(pump_time_index)])
-display(['End Time is: ',num2str(end_time)])
+%display(['Time Index is: ',num2str(pump_time_index)])
+%display(['End Time is: ',num2str(end_time)])
 time_naught=neg(pump_time_index,1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -234,7 +243,12 @@ else
 end
 
 if plot_trace
-    figure()
+    if dock_figs
+        figure('Windowstyle','docked')
+    else
+        figure()
+    end
+
     plot(neg(:,1)*10^9,(pos(:,2)-neg(:,2)-pre_signal_average)*10^3,'-','Color',[0 0 0],'LineWidth',1.25)
     hold on
     xlim([0 (end_time/2)*10^9])
@@ -253,7 +267,7 @@ if plot_trace
         'FontSize',20,...
         'FontName','Times')
     txt3 = {['Time Index = ',num2str(pump_time_index)],['End Time = ',num2str(end_time)]};
-    saveas(gcf,"TGS_Trace.png")
+    saveas(gcf,plot_dir + "/TGS_Trace.png")
 end
 
 if start_point==0
@@ -280,7 +294,11 @@ else
             for jj=1:der_len
                 fixed_derivative(jj)=(total_signal(jj+1,2)-total_signal(jj,2))/scope_timebase;
             end
-            figure()
+            if dock_figs         
+                figure('Windowstyle','docked')     
+            else         
+                figure()     
+            end
             plot(total_signal(1:der_len,1),fixed_derivative,'k-')
             title('This is the derivative of fixed short')
         end
@@ -288,7 +306,11 @@ else
         %if you don't want to automatically find the peak t_0 of the profile, setting find_max to true above will allow
         %you to select a region on the plot within with to search. Useful if there are initial transients.
         if find_max || plot_everything
-            figure()
+            if dock_figs         
+                figure('Windowstyle','docked')     
+            else         
+                figure()     
+            end
             plot(total_signal(:,1),total_signal(:,2),'k-')
             xlim([0 1.5*10^-7])
             title('this is fixed short');
@@ -331,7 +353,11 @@ else
             thermal_diffusivity_err=[thermal_diffusivity-con_int_error(1,2) con_int_error(2,2)-thermal_diffusivity]/2;
 
             if plot_everything
-                figure()
+                if dock_figs         
+                    figure('Windowstyle','docked')     
+                else         
+                    figure()     
+                end
                 plot(total_signal(:,1),total_signal(:,2),total_signal(:,1),f0(total_signal(:,1)))
                 hold on
                 title('First naive fit')
@@ -375,7 +401,11 @@ else
                 thermal_diffusivity_err=[thermal_diffusivity-con_int_error(1,2) con_int_error(2,2)-thermal_diffusivity]/2;
 
                 if plot_everything
-                    figure()
+                    if dock_figs         
+                        figure('Windowstyle','docked')     
+                    else         
+                        figure()     
+                    end
                     plot(total_signal(:,1),total_signal(:,2))
                     hold on
                     title(strcat('Fit number ',num2str(jj+1),' - fixed beta'))
@@ -451,7 +481,7 @@ else
             end
 
             if print_final_fit
-                display(f2)
+                display(f2);
             end
 
             thermal_diffusivity=f2.k;
@@ -506,7 +536,11 @@ else
                 
                 %This is where the final fit composite figure is made
 
-                figure()
+                if dock_figs         
+                    figure('Windowstyle','docked')     
+                else         
+                    figure()     
+                end
                 plot((neg(:,1)-time_naught)*10^9,(pos(:,2)-neg(:,2)-pre_signal_average)*10^3/amp_factor,'-','Color','#464646','LineWidth',2.5,'DisplayName','Raw TGS trace')
                 hold on
 %               %%%%%%plot vertical line at start time
@@ -561,7 +595,9 @@ else
                 if ~steel
                     axes('pos',[.48 .48 .42 .42])
                     imshow('TGS_FFT.png')
-                    saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
+                    plot_fname = strcat(plot_dir,"TGS_Final_Fit_",pos_fname,".png");
+                    saveas(gcf,plot_fname)
+                    %saveas(gcf,strcat(plot_dir,pos_fname,"_TGS_Final_Fit.png"))
                 end
             end
         end
@@ -583,7 +619,11 @@ else
         amp_factor=1;
 
         if plot_final
-            figure()
+            if dock_figs         
+                figure('Windowstyle','docked')     
+            else         
+                figure()     
+            end
             plot((neg(:,1)-time_naught)*10^9,(pos(:,2)-neg(:,2)-pre_signal_average)*10^3/amp_factor,'k-','LineWidth',4,'DisplayName','Raw TGS trace')
             hold on
             plot(total_signal(pump_time_index:end,1)*10^9,(famp(total_signal(pump_time_index:end,1)))*10^3/amp_factor,'r--','LineWidth',4,'DisplayName','Full functional fit')
@@ -608,7 +648,9 @@ else
                 'FontSize',40,...
                 'FontName','Times')
             legend('Location','northeast')
-            saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
+            plot_fname = strcat(plot_dir,"TGS_Final_Fit_",pos_fname,".png");
+            saveas(gcf,plot_fname)
+            %saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
         end      
         if print_final_fit
                 display(famp)

@@ -5,6 +5,7 @@ freq_lowB=0.1;
 freq_hiB=0.9;
 
 percent_peak_fit=1;
+dock_figs=0;
 
 if nargin<2
     two_mode=0;
@@ -108,7 +109,11 @@ SNR_fft = snr(fft(:,2),fft_noise(:,2));
 
 
 if plotty
-    figure()
+    if dock_figs         
+        figure('Windowstyle','docked')     
+    else         
+        figure()     
+    end
 %     axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',5)
     plot(fft(:,1),fft(:,2),'-','LineWidth',2.5,'Color','#464646')%'DisplayName','Raw FFT Data');
     hold on
