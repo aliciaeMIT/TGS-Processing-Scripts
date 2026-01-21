@@ -339,7 +339,7 @@ else
 
             SAW_only=[total_signal(:,1) total_signal(:,2)-f0(total_signal(:,1))];
             [fft] = TGS_phase_fft(SAW_only,psd_out,truncate_fraction);
-            [frequency_final,frequency_error,tau_lorentz]=lorentzian_peak_fit(fft,two_SAW_frequencies,plot_psd);
+            [frequency_final,frequency_error,tau_lorentz]=lorentzian_peak_fit(fft,two_SAW_frequencies,plot_psd,erase(pos_file, ".txt"));
             acoustic_damping_constant(1)=tau_lorentz(1);
 
             SAW_speed=frequency_final*grating*10^(-6);
@@ -560,8 +560,8 @@ else
                 % Display the already-made FFT as an inset image
                 if ~steel
                     axes('pos',[.48 .48 .42 .42])
-                    imshow('TGS_FFT.png')
-                    saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
+                    imshow(strcat(erase(pos_file, ".txt"),"_TGS_FFT.png"))
+                    saveas(gcf,strcat(erase(pos_file, ".txt"),"_TGS_Final_Fit.png"))
                 end
             end
         end
