@@ -328,7 +328,7 @@ else
             thermal_diffusivity=f0.k;
             con_int_error=confint(f0,0.95);
             %factor of 2 makes the 1 sigma confidence interval come out
-            thermal_diffusivity_err=[thermal_diffusivity-con_int_error(1,2) con_int_error(2,2)-thermal_diffusivity]/2;
+            thermal_diffusivity_err=(con_int_error(2,2)-con_int_error(1,2))/(2*1.96); %2*1.96 for 1 sigma output;
 
             if plot_everything
                 figure()
@@ -372,7 +372,7 @@ else
                 thermal_diffusivity=f1.k;
                 con_int_error=confint(f1,0.95);
                 %factor of 2 makes the 1 sigma confidence interval come out
-                thermal_diffusivity_err=[thermal_diffusivity-con_int_error(1,2) con_int_error(2,2)-thermal_diffusivity]/2;
+                thermal_diffusivity_err=(con_int_error(2,2)-con_int_error(1,2))/(2*1.96); %2*1.96 for 1 sigma output;
 
                 if plot_everything
                     figure()
@@ -462,14 +462,14 @@ else
             C= f2.D;
 
             con_int_error=confint(f2,0.95);
-            %factor of 2 makes the 1 sigma confidence interval come out
-            thermal_diffusivity_err=(thermal_diffusivity-con_int_error(1,2))/2;
-            acoustic_damping_error = (f2.t - con_int_error(1,6))/2;
-            A_err= (f2.A - con_int_error(1,1))/2;
-            displacement_reflectance_ratio_err= (f2.beta - con_int_error(1,3))/2;
-            B_err= (f2.B - con_int_error(1,4))/2;
-            acoustic_phase_err= (f2.p - con_int_error(1,5))/2;
-            C_err= (f2.D - con_int_error(1,7))/2;
+            %factor of 2*1.96 makes the 1 sigma confidence interval come out
+            thermal_diffusivity_err=(con_int_error(2,2)-con_int_error(1,2))/(2*1.96); 
+            acoustic_damping_error = (con_int_error(2,6)-con_int_error(1,6))/(2*1.96);
+            A_err= (con_int_error(2,1)-con_int_error(1,1))/(2*1.96);
+            displacement_reflectance_ratio_err= (con_int_error(2,3)-con_int_error(1,3))/(2*1.96);
+            B_err= (con_int_error(2,4)-con_int_error(1,4))/(2*1.96);
+            acoustic_phase_err= (con_int_error(2,5)-con_int_error(1,5))/(2*1.96);
+            C_err= (con_int_error(2,7)-con_int_error(1,7))/(2*1.96);
 
             %final fit (on constant provided) version of tau
             acoustic_damping_constant(3)=f2.t;
