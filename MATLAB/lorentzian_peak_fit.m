@@ -170,9 +170,7 @@ if plotty
         'FontUnits','points',...
         'FontSize',24,...
         'FontName','Times')
-%     legend('Location','northwest')
-    saveas(gcf,"TGS_FFT.png")
-%     saveas(gcf,strcat(erase(pos_file, ".txt"),"_TGS_FFT.png"))
+    saveas(gcf,strcat(erase(pos_file, ".txt"),"_TGS_FFT.png"))
 end
 end
 
