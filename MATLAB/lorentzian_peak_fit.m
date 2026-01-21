@@ -1,5 +1,5 @@
-function [peak,peak_err,fwhm,tau,f0,SNR_fft]=lorentzian_peak_fit(fft,two_mode,plotty)
-% function [peak,peak_err,fwhm,tau,f0,SNR_fft]=lorentzian_peak_fit(fft,two_mode,plotty,pos_file,DPA)
+function [peak,peak_err,fwhm,tau,f0,SNR_fft]=lorentzian_peak_fit(fft,two_mode,plotty,pos_file)
+% Elena´s modification Jan 2026: Introduction of pos_file as an argument for the function.
 
 freq_lowB=0.1;
 freq_hiB=0.9;
@@ -16,11 +16,9 @@ end
 
 st_point=1; %set to cut off DC spike in fft, if necessary
 end_point=12000; %set to cut off DC spike in fft, if necessary
-
 fft(:,1)=fft(:,1)/10^9; %put everything in units of GHz so fit is not crazy
 fft(1:st_point,2)=0;
 %fft(end_point:end,2)=0; %This line of legacy code deletes half the data from the fit. Why? We do not know. But it is here if you want it back. 
-
 
 [max_val,peak_ind]=max(fft(st_point:end,2));
 peak_loc=fft(peak_ind,1);
@@ -71,17 +69,30 @@ OPS=fitoptions('Method','NonLinearLeastSquares','Lower',LB,'Upper',UB,'Start',ST
 TYPE=fittype('(A./((x-x0)^2+(W)^2))+C','options',OPS,'coefficients',{'A','x0','W','C'});
 
 [f0,~]=fit(fft(neg_ind_final:pos_ind_final,1),fft(neg_ind_final:pos_ind_final,2),TYPE);
-error=confint(f0,0.95); %this is the 2 sigma error
-% display(f0)
+ci = confint(f0,0.95); % 2x4 matrix: [lower; upper] for [A x0 W C]
+% avoid division by zero if ci are identical
+eps_denom = 1e-12;
+%Difference between upper and lower confidence intervals must be scaled by 2 (symmetric) and then 1.96 for the std dev.
+sigma_x0 = (ci(2,2)-ci(1,2)) / (2*1.96 + eps_denom); % in GHz
+sigma_W  = (ci(2,3)-ci(1,3)) / (2*1.96 + eps_denom); % in GHz
 
-peak=f0.x0*10^9; %so answers is in Hz
-peak_err=((f0.x0-error(1,2))*10^9)/2; % so answer 1 sigma in Hz
-fwhm=2*f0.W*10^9; %so answer is in Hz
-tau=1/(pi*fwhm); %so answer is in sec
+peak = f0.x0 * 1e9;                % Hz
+peak_err = sigma_x0 * 1e9;         % approximate 1-sigma in Hz
+
+fwhm = 2 * f0.W * 1e9;             % Hz
+fwhm_err = 2 * sigma_W * 1e9;      % Hz (approx 1-sigma)
+
+% lifetime tau and its propagated error
+tau = 1/(pi * fwhm);               % seconds
+if fwhm > 0
+    tau_err = fwhm_err / (pi * fwhm^2); % propagated error (approx)
+else
+    tau_err = NaN;
+end
+peakA=f0.A;
 
 if two_mode
     new_fft_amp=fft(:,2)-f0(fft(:,1));
-%     [~,peak_ind_2]=max(new_fft_amp(st_point:end));
     [~,peak_ind_2]=max(new_fft_amp(st_two_mode:end_two_mode));
     peak_loc_2=fft(peak_ind_2,1);
     
@@ -90,38 +101,48 @@ if two_mode
     TYPE1=fittype('(A./((x-x0)^2+(W)^2))+C','options',OPS1,'coefficients',{'A','x0','W','C'});
     
     [f1,~]=fit(fft(:,1),new_fft_amp,TYPE1);
-    error2=confint(f1,0.95);
+    ci1 = confint(f1,0.95);
+    sigma_x0_1 = (ci1(2,2)-ci1(1,2)) / (2*1.96 + eps_denom);
+    sigma_W_1  = (ci1(2,3)-ci1(1,3)) / (2*1.96 + eps_denom);
+
+    peak2 = f1.x0 * 1e9;
+    peak_err2 = sigma_x0_1 * 1e9;
+    fwhm2 = 2 * f1.W * 1e9;
+    fwhm_err2 = 2 * sigma_W_1 * 1e9;
+    tau2 = 1/(pi * fwhm2);
     
-    peak2=f1.x0*10^9; %so answers is in Hz
-    peak_err2=((f1.x0-error2(1,2))*10^9)/2; % so answer 1 sigma in Hz
-    fwhm2=2*f1.W*10^9; %so answer is in Hz
-    tau2=1/(pi*fwhm2); %so answer is in sec
-    
-    peak=[peak peak2];
-    peak_err=[peak_err peak_err2];
-    fwhm=[fwhm fwhm2];
-    tau=[tau tau2];
+    % Elena addition to consider the bigger of the 2 peaks in the FFT
+    [max_orig, ind_orig] = max(fft(:,2));
+    [max_resid, ind_resid] = max(new_fft_amp);
+
+    if f1.A > peakA
+        peak=[peak2 peak];
+        peak_err=[peak_err2 peak_err];
+        fwhm=[fwhm2 fwhm];
+        tau=[tau2 tau];
+        fprintf('Original FFT peak: %.4f at %.4f GHz\n', max_orig, fft(ind_orig,1));
+        fprintf('Residual FFT peak: %.4f at %.4f GHz\n', max_resid, fft(ind_resid,1));
+    else
+        peak=[peak peak2];
+        peak_err=[peak_err peak_err2];
+        fwhm=[fwhm fwhm2];
+        tau=[tau tau2];
+        fprintf('Peak 1 is the maximum: %.2f\n', peak)
+    end
 end
 
 fft_noise = [fft(:,1) fft(:,2)-f0(fft(:,1))];
 SNR_fft = snr(fft(:,2),fft_noise(:,2));
 
-
 if plotty
     figure()
-%     axes('Position',[0 0 1 1],'xtick',[],'ytick',[],'box','on','handlevisibility','off','LineWidth',5)
     plot(fft(:,1),fft(:,2),'-','LineWidth',2.5,'Color','#464646')%'DisplayName','Raw FFT Data');
     hold on
-%     txt = [num2str(DPA)];
-%     text(0.1,0.8,txt,'HorizontalAlignment','left','FontSize',28)
     xline(LB(2),'-','LineWidth',2.5,'DisplayName','Lower bound','Color','#3E59DC');
     hold on
     xline(UB(2),'-','LineWidth',2.5,'DisplayName','Upper bound','Color','#3E59DC');
     hold on
-%     plot(fft(:,1),new_fft_amp,'k-','LineWidth',3)%'DisplayName','Raw FFT Data');
     hold on
-%     plot(fft_noise(:,1),fft_noise(:,2),'c','LineWidth',3,'DisplayName','Noise');
-%     hold on
     plot(fft(:,1),f0(fft(:,1)),'--','LineWidth',2.5,'DisplayName','First SAW Frequency Fit','Color','#C43838');
     hold on
     if two_mode
@@ -151,8 +172,7 @@ if plotty
         'FontName','Times')
 %     legend('Location','northwest')
     saveas(gcf,"TGS_FFT.png")
-%     saveas(gcf,strcat(pos_file,"_TGS_FFT.png"))
+%     saveas(gcf,strcat(erase(pos_file, ".txt"),"_TGS_FFT.png"))
 end
-
 end
 
