@@ -58,12 +58,17 @@ maximum_iterations_LM=10000; %the number of iterations the Levenberg-Marquardt f
 max_evaluations_LM=2000; %number of function evaluations (this historically has not been stated and defaults to 200*[number of fitting params])
 find_max=0; %gives the option to manually locate the beginning time t_0
 plot_everything=0; %plots a bunch of extra graphs at certain steps to check things
-plot_trace=1; %plots pos - neg file data
+plot_trace=0; %plots pos - neg file data
 psd_out=1; % generates power spectrum density plots rather than FFT magnitudes
 plot_psd=1; %adds bonus lines in lorentzian_peak_fit plotting
 plot_final=1; % Generates the final plots with the fft inserts
-print_final_fit=1; % option to display the fitted functions of the exponential term and the full functional fit (I think?)
+print_final_fit=0; % option to display the fitted functions of the exponential term and the full functional fit (I think?)
 two_detectors=1; % tells the script what format the files are in based on number of detectors
+dock_figs=0;
+
+[pos_fpath, pos_fname, ~] = fileparts(pos_file);
+plot_dir = pos_fpath + "/plots/";
+mkdir(plot_dir)
 
 %updated tstep parsing to better handle variable sampling rates that can happen if the scope is left in 4-channel mode rather than 2-channel mode.
 %in general, this should never happen as 20 gigasamples per second is how the scope should be configured, but accidents happen and this renders
@@ -218,8 +223,8 @@ file_date_time = strcat(string(file_date,'yyyy_MM_dd'),'_',string(file_time,'HH:
 
 %%%%%Time indexing block%%%%%%%%
 [pump_time_index,end_time]=findTimeIndex(pos,neg);
-display(['Time Index is: ',num2str(pump_time_index)])
-display(['End Time is: ',num2str(end_time)])
+%display(['Time Index is: ',num2str(pump_time_index)])
+%display(['End Time is: ',num2str(end_time)])
 time_naught=neg(pump_time_index,1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -234,7 +239,7 @@ else
 end
 
 if plot_trace
-    figure()
+    figure("WindowStyle","docked")
     plot(neg(:,1)*10^9,(pos(:,2)-neg(:,2)-pre_signal_average)*10^3,'-','Color',[0 0 0],'LineWidth',1.25)
     hold on
     xlim([0 (end_time/2)*10^9])
@@ -253,7 +258,8 @@ if plot_trace
         'FontSize',20,...
         'FontName','Times')
     txt3 = {['Time Index = ',num2str(pump_time_index)],['End Time = ',num2str(end_time)]};
-    saveas(gcf,"TGS_Trace.png")
+    %saveas(gcf,"TGS_Trace.png")
+    saveas(gcf,plot_dir + "/TGS_Trace.png")
 end
 
 if start_point==0
@@ -280,7 +286,11 @@ else
             for jj=1:der_len
                 fixed_derivative(jj)=(total_signal(jj+1,2)-total_signal(jj,2))/scope_timebase;
             end
-            figure()
+            if dock_figs         
+                figure('Windowstyle','docked')     
+            else         
+                figure()     
+            end
             plot(total_signal(1:der_len,1),fixed_derivative,'k-')
             title('This is the derivative of fixed short')
         end
@@ -288,7 +298,11 @@ else
         %if you don't want to automatically find the peak t_0 of the profile, setting find_max to true above will allow
         %you to select a region on the plot within with to search. Useful if there are initial transients.
         if find_max || plot_everything
-            figure()
+            if dock_figs        
+                figure('Windowstyle','docked')     
+            else         
+                figure()     
+            end
             plot(total_signal(:,1),total_signal(:,2),'k-')
             xlim([0 1.5*10^-7])
             title('this is fixed short');
@@ -328,10 +342,14 @@ else
             thermal_diffusivity=f0.k;
             con_int_error=confint(f0,0.95);
             %factor of 2 makes the 1 sigma confidence interval come out
-            thermal_diffusivity_err=(con_int_error(2,2)-con_int_error(1,2))/(2*1.96); %2*1.96 for 1 sigma output;
+            thermal_diffusivity_err=[thermal_diffusivity-con_int_error(1,2) con_int_error(2,2)-thermal_diffusivity]/2;
 
             if plot_everything
-                figure()
+                if dock_figs         
+                    figure('Windowstyle','docked')     
+                else         
+                    figure()     
+                end
                 plot(total_signal(:,1),total_signal(:,2),total_signal(:,1),f0(total_signal(:,1)))
                 hold on
                 title('First naive fit')
@@ -339,7 +357,7 @@ else
 
             SAW_only=[total_signal(:,1) total_signal(:,2)-f0(total_signal(:,1))];
             [fft] = TGS_phase_fft(SAW_only,psd_out,truncate_fraction);
-            [frequency_final,frequency_error,tau_lorentz]=lorentzian_peak_fit(fft,two_SAW_frequencies,plot_psd,erase(pos_file, ".txt"));
+            [frequency_final,frequency_error,tau_lorentz]=lorentzian_peak_fit(fft,two_SAW_frequencies,plot_psd,POSbaselineStr);
             acoustic_damping_constant(1)=tau_lorentz(1);
 
             SAW_speed=frequency_final*grating*10^(-6);
@@ -372,10 +390,14 @@ else
                 thermal_diffusivity=f1.k;
                 con_int_error=confint(f1,0.95);
                 %factor of 2 makes the 1 sigma confidence interval come out
-                thermal_diffusivity_err=(con_int_error(2,2)-con_int_error(1,2))/(2*1.96); %2*1.96 for 1 sigma output;
+                thermal_diffusivity_err=[thermal_diffusivity-con_int_error(1,2) con_int_error(2,2)-thermal_diffusivity]/2;
 
                 if plot_everything
-                    figure()
+                    if dock_figs
+                        figure('Windowstyle','docked')     
+                    else         
+                        figure()     
+                    end
                     plot(total_signal(:,1),total_signal(:,2))
                     hold on
                     title(strcat('Fit number ',num2str(jj+1),' - fixed beta'))
@@ -451,7 +473,7 @@ else
             end
 
             if print_final_fit
-                display(f2)
+                display(f2);
             end
 
             thermal_diffusivity=f2.k;
@@ -462,14 +484,14 @@ else
             C= f2.D;
 
             con_int_error=confint(f2,0.95);
-            %factor of 2*1.96 makes the 1 sigma confidence interval come out
-            thermal_diffusivity_err=(con_int_error(2,2)-con_int_error(1,2))/(2*1.96); 
-            acoustic_damping_error = (con_int_error(2,6)-con_int_error(1,6))/(2*1.96);
-            A_err= (con_int_error(2,1)-con_int_error(1,1))/(2*1.96);
-            displacement_reflectance_ratio_err= (con_int_error(2,3)-con_int_error(1,3))/(2*1.96);
-            B_err= (con_int_error(2,4)-con_int_error(1,4))/(2*1.96);
-            acoustic_phase_err= (con_int_error(2,5)-con_int_error(1,5))/(2*1.96);
-            C_err= (con_int_error(2,7)-con_int_error(1,7))/(2*1.96);
+            %factor of 2 makes the 1 sigma confidence interval come out
+            thermal_diffusivity_err=(thermal_diffusivity-con_int_error(1,2))/2;
+            acoustic_damping_error = (f2.t - con_int_error(1,6))/2;
+            A_err= (f2.A - con_int_error(1,1))/2;
+            displacement_reflectance_ratio_err= (f2.beta - con_int_error(1,3))/2;
+            B_err= (f2.B - con_int_error(1,4))/2;
+            acoustic_phase_err= (f2.p - con_int_error(1,5))/2;
+            C_err= (f2.D - con_int_error(1,7))/2;
 
             %final fit (on constant provided) version of tau
             acoustic_damping_constant(3)=f2.t;
@@ -506,7 +528,11 @@ else
                 
                 %This is where the final fit composite figure is made
 
-                figure()
+                 if dock_figs         
+                    figure('Windowstyle','docked')     
+                else         
+                    figure()     
+                end
                 plot((neg(:,1)-time_naught)*10^9,(pos(:,2)-neg(:,2)-pre_signal_average)*10^3/amp_factor,'-','Color','#464646','LineWidth',2.5,'DisplayName','Raw TGS trace')
                 hold on
 %               %%%%%%plot vertical line at start time
@@ -560,8 +586,13 @@ else
                 % Display the already-made FFT as an inset image
                 if ~steel
                     axes('pos',[.48 .48 .42 .42])
-                    imshow(strcat(erase(pos_file, ".txt"),"_TGS_FFT.png"))
-                    saveas(gcf,strcat(erase(pos_file, ".txt"),"_TGS_Final_Fit.png"))
+                    %saveas(gcf,strcat(erase(pos_file, ".txt"),"_TGS_FFT.png"))
+                    fft_name = plot_dir+ "/" + strcat(erase(pos_fname, ".txt"),"_TGS_FFT.png");
+                    imshow(fft_name)
+                    %imshow('TGS_FFT.png')
+                    plot_fname = strcat(plot_dir,"TGS_Final_Fit_",pos_fname,".png");
+                    saveas(gcf,plot_fname)
+                    %saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
                 end
             end
         end
@@ -583,7 +614,11 @@ else
         amp_factor=1;
 
         if plot_final
-            figure()
+            if dock_figs         
+                figure('Windowstyle','docked')     
+            else         
+                figure()     
+            end
             plot((neg(:,1)-time_naught)*10^9,(pos(:,2)-neg(:,2)-pre_signal_average)*10^3/amp_factor,'k-','LineWidth',4,'DisplayName','Raw TGS trace')
             hold on
             plot(total_signal(pump_time_index:end,1)*10^9,(famp(total_signal(pump_time_index:end,1)))*10^3/amp_factor,'r--','LineWidth',4,'DisplayName','Full functional fit')
@@ -608,7 +643,9 @@ else
                 'FontSize',40,...
                 'FontName','Times')
             legend('Location','northeast')
-            saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
+            plot_fname = strcat(plot_dir,"TGS_Final_Fit_",pos_fname,".png");
+            saveas(gcf,plot_fname)
+            %saveas(gcf,strcat(pos_file,"_TGS_Final_Fit.png"))
         end      
         if print_final_fit
                 display(famp)

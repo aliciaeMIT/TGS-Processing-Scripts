@@ -14,6 +14,10 @@ if nargin<3
     plotty=0;
 end
 
+[pos_fpath, pos_fname, ~] = fileparts(pos_file);
+plot_dir = pos_fpath + "/plots/";
+mkdir(plot_dir)
+
 st_point=1; %set to cut off DC spike in fft, if necessary
 end_point=12000; %set to cut off DC spike in fft, if necessary
 fft(:,1)=fft(:,1)/10^9; %put everything in units of GHz so fit is not crazy
@@ -170,7 +174,7 @@ if plotty
         'FontUnits','points',...
         'FontSize',24,...
         'FontName','Times')
-    saveas(gcf,strcat(erase(pos_file, ".txt"),"_TGS_FFT.png"))
+    saveas(gcf,plot_dir+ "/" + strcat(erase(pos_fname, ".txt"),"_TGS_FFT.png"))
 end
 end
 
